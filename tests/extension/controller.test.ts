@@ -49,6 +49,17 @@ describe('run lifecycle', () => {
     await test.controller.cancel(); await running;
   });
 
+  it('labels a streamed MCP tool call from the SDK toolInfo shape without repeating the name', async () => {
+    const test = fixture();
+    const running = test.controller.run('Explain');
+    await vi.waitFor(() => expect(test.backend.agent.run).toHaveBeenCalled());
+    test.options!.onEvent({type:'tool',text:'Tool call: read_file',data:{toolCalls:[{id:'call',toolInfo:{type:'mcp',name:'read_file',serverId:'editor-id'},function:{name:'read_file',arguments:'{"path":"src/main.rs"}'}}]}});
+    expect(test.controller.state.entries.at(-1)?.text).toBe('Tool call: read_file');
+    test.options!.onEvent({type:'tool',text:'Tool result',data:{type:'tool.response',toolCallId:'call',content:'source'}});
+    expect(test.controller.state.entries.at(-1)?.text).toBe('Tool result');
+    await test.controller.cancel(); await running;
+  });
+
   it('disposes connections and aborts the run without undoing accepted work', async () => {
     const test = fixture();
     const running = test.controller.run('Change code');

@@ -59,8 +59,14 @@ export class FinnController {
     if (event.type === 'tool') {
       const data = event.data && typeof event.data === 'object' ? event.data as Record<string, unknown> : {};
       const calls = Array.isArray(data.toolCalls) ? data.toolCalls : [];
-      const names = calls.flatMap(call => call && typeof call === 'object' && typeof call.name === 'string' ? [call.name.slice(0, 256)] : []);
-      this.entry('tool', [event.text ?? 'TrueForge tool event', ...names].join(': '));
+      const names = calls.flatMap(call => {
+        const value = call && typeof call === 'object' ? call as { name?: unknown; toolInfo?: { name?: unknown }; function?: { name?: unknown } } : undefined;
+        const name = value?.toolInfo?.name ?? value?.function?.name ?? value?.name;
+        return typeof name === 'string' && name.length ? [name.slice(0, 256)] : [];
+      });
+      const label = event.text ?? 'TrueForge tool event';
+      const missing = names.filter(name => !label.includes(name));
+      this.entry('tool', missing.length ? `${label}: ${missing.join(', ')}` : label);
     }
     if (event.type === 'status' && event.text) this.state.status = event.text;
     if (event.type === 'error') this.state.error = event.text ?? 'TrueForge reported an error.';
