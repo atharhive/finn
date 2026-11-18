@@ -6,6 +6,16 @@ The official Forge-a-thon problem statement (Round 1, pp. 4–8) fixes **pallets
 
 Current evidence: preparation was exercised on the official checkout; baseline `tests/test_cli.py` passed **58 tests**. Unmodified Flask correctly fails the A/B acceptance probes. Clean before/after filesystem comparison works for C, but that alone is **not** a resilience demonstration. No successful model-backed fixed-task run has been recorded; configure a model before rehearsing. Do not turn unit tests, mock-server tests, or a successful extension activation into a claim of successful A/B/C. The agent runtime itself has since been verified live with a real model through TrueForge (streamed text, real editor MCP tool calls, in-memory proposal, accepted hunk, undo, mid-stream cancellation); see `docs/implementation-agent.md`. That verifies the machinery, not the fixed tasks below.
 
+### Rehearsal run, 18 November 2026
+
+A headless rehearsal drove the production agent and workspace modules, not the VS Code UI, against a real model through TrueForge 0.185.0 on a freshly prepared checkout. It is engineering evidence only; the scorecard stays UNCLAIMED until the recorded UI run exists.
+
+- A: one proposal, one hunk on `get_debug_flag`, accepted. `--task a` reported `passed: true` with `off`, `OFF`, `oFf`, `n` and `N` false and the truthy regression cases intact.
+- B: six hunks across `src/flask/cli.py`, `tests/test_cli.py`, `docs/api.rst` and `docs/cli.rst`. `--task b` reported `passed: true`, `flask --help` lists `config`, and the loaded app emitted masked JSON with `SECRET_KEY` and `DATABASE_PASSWORD` as `***` while benign values stayed intact.
+- C: the unreachable provider produced `[Model Error] Cannot connect to API: bad port` in 0.5 s with zero proposals and no file changes. `--task c` reported `passed: true`, which means the filesystem is unchanged, not that resilience was demonstrated.
+
+The rehearsal used model reference `localtest/finn-demo` through a loopback provider shim, so it does not demonstrate a provider configured in the TrueForge UI. The A model added a `.. versionchanged:: 3.2` directive on its own; add "do not add versionchanged directives" to the instruction if that should not appear on screen. The C error text above comes from pointing a provider at port 9; a reachable endpoint with an invalid key produces a clearer message for the recording.
+
 ## 1. Prepare an isolated workspace
 
 Prerequisites: Node as specified in `package.json`, Git, Python 3.9+ compatible with Flask, network access to GitHub/PyPI, and `uv` (preferred) or working `python -m venv`/pip. Build/install Finn using the root README. In a terminal at the Finn repository:
