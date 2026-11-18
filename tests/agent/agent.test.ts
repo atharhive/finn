@@ -342,6 +342,44 @@ it("surfaces complete assistant messages and real tool events without duplicatin
   ).toBe("Hello summary");
   expect(events.filter((e) => e.type === "tool")).toHaveLength(2);
 });
+it("names streaming tool calls and their results for the editor timeline", async () => {
+  const call = {
+    id: "call-1",
+    type: "function",
+    function: { name: "read_file", arguments: "" },
+    index: 0,
+    tool_info: {
+      type: "mcp",
+      name: "read_file",
+      server_id: "editor-id",
+      server_name: "editor",
+    },
+  };
+  const { config } = await harness((r, res) => {
+    if (!r.path.endsWith("/turns")) return false;
+    sse(res, [
+      event("model.message.delta", { content: null, tool_calls: [call] }),
+      event("model.message.delta", {
+        content: null,
+        tool_calls: [{ index: 0, function: { arguments: '{"path":"src/main.rs"}' } }],
+      }),
+      event("tool.response", { tool_call_id: "call-1", content: "source" }),
+      done(),
+    ]);
+    return true;
+  });
+  const agent = new FinnAgent(config);
+  agents.push(agent);
+  const events: AgentEvent[] = [];
+  await agent.run({
+    prompt: "Inspect",
+    mode: "agent",
+    onEvent: (e) => events.push(e),
+  });
+  expect(
+    events.filter((e) => e.type === "tool").map((e) => e.text),
+  ).toEqual(["Tool call: read_file", "Tool result: read_file"]);
+});
 it("denies unexpected harness approvals by default using the actual turn events schema", async () => {
   const { config, requests } = await harness((r, res) => {
     if (!r.path.endsWith("/turns")) return false;

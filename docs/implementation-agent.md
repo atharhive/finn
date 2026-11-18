@@ -106,4 +106,21 @@ npm run typecheck
 
 The opt-in live contract test starts the real editor workspace MCP service, registers its bearer-authenticated connector in the running TrueForge server, verifies an honest unknown-model error, and verifies cleanup. It requires the loopback allowlist above. It never bypasses the harness or supplies fake model responses.
 
-Verified result after the allowlisted server restart: **3 test files, 29 tests passed**, including that live TrueForge registration/error/cleanup test; root TypeScript typecheck passed. Provider-backed successful inference, real model-triggered tool execution and real native-skill sandbox loading remain unverified without configured credentials and sandbox resources.
+Verified result after the allowlisted server restart: **3 test files, 29 tests passed**, including that live TrueForge registration/error/cleanup test; root TypeScript typecheck passed.
+
+## Live model-backed evidence
+
+`tests/agent/live-model.test.ts` is skipped unless both variables are set:
+
+```sh
+FINN_TRUEFORGE_LIVE_URL=http://127.0.0.1:8790 FINN_LIVE_MODEL=<provider>/<model> \
+  npx vitest run tests/agent/live-model.test.ts
+```
+
+The first case drives a real model turn: streamed text arrives, the model calls `read_file` and `propose_edit` over the authenticated editor MCP bridge, the proposal stays in memory with pending hunks, the source file is byte-identical before acceptance, an accepted hunk writes the reviewed change, and `undo` restores the original bytes. The second case cancels a real streaming turn and asserts that the run rejects, no proposals remain, and no file changed.
+
+Verified on 18 November 2026 against TrueForge 0.185.0 and a real OpenAI-compatible provider (`deepseek-v4.1-flash`): **2 tests passed in 21.2s**. The provider endpoint sat behind the loopback allowlist; Finn never contacted a provider directly.
+
+Tool timeline labels come from the SDK stream: a tool call is announced as `Tool call: <name>` the moment its name arrives, and its result as `Tool result: <name>`. Names resolved from `toolInfo.name`, falling back to `function.name`, so the editor shows real tool names instead of raw payloads.
+
+Provider endpoints that require extra routing headers are fronted by a local loopback shim during verification. That shim is test infrastructure in the scratch directory, not part of Finn and not committed.

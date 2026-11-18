@@ -89,6 +89,18 @@ npm audit --omit=dev
 On Linux, the VS Code host test needs Xvfb plus GTK, NSS and audio runtime libraries.
 It starts a real extension development host, not a mocked `vscode` module.
 
+A real model turn through a running TrueForge is opt-in and skipped without both
+variables:
+
+```bash
+FINN_TRUEFORGE_LIVE_URL=http://127.0.0.1:8790 FINN_LIVE_MODEL=<provider>/<model> \
+  npx vitest run tests/agent/live-model.test.ts
+```
+
+It streams a real turn, requires actual editor MCP tool calls, checks that nothing
+reaches disk before a reviewed hunk is accepted, and exercises undo and mid-stream
+cancellation. It never fabricates provider responses.
+
 <details>
 <summary>Module boundaries and tests</summary>
 

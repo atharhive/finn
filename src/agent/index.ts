@@ -178,14 +178,45 @@ export class FinnAgent {
           let completed = false;
           let turnId: string | undefined;
           const streamingThreads = new Set<string>();
+          const toolNames = new Map<string, string>();
+          const announcedTools = new Set<string>();
+          const nameTools = (calls: unknown[]): string[] => {
+            const fresh: string[] = [];
+            for (const value of calls) {
+              const call = value as {
+                id?: unknown;
+                toolInfo?: { name?: unknown };
+                function?: { name?: unknown };
+              };
+              const name = [call?.toolInfo?.name, call?.function?.name].find(
+                (candidate): candidate is string =>
+                  typeof candidate === "string" && candidate.length > 0,
+              );
+              if (!name) continue;
+              const id = typeof call?.id === "string" ? call.id : undefined;
+              if (id) toolNames.set(id, name);
+              if (id && announcedTools.has(id)) continue;
+              if (id) announcedTools.add(id);
+              fresh.push(name);
+            }
+            return fresh;
+          };
           for await (const event of stream) {
             controller.signal.throwIfAborted();
             if (
               (event.type === "model.message" ||
                 event.type === "model.message.delta") &&
               event.toolCalls?.length
-            )
+            ) {
               invokedTools = true;
+              const fresh = nameTools(event.toolCalls);
+              if (fresh.length)
+                options.onEvent({
+                  type: "tool",
+                  text: `Tool call: ${fresh.join(", ")}`,
+                  data: event,
+                });
+            }
             if (
               event.type.startsWith("tool.") ||
               event.type === "user.tool_response" ||
@@ -247,16 +278,11 @@ export class FinnAgent {
                         .join("");
                 if (text) options.onEvent({ type: "text", text, data: event });
               }
-              if (event.toolCalls?.length)
-                options.onEvent({
-                  type: "tool",
-                  text: "Tool calls",
-                  data: event,
-                });
             } else if (event.type === "tool.response") {
+              const name = toolNames.get(event.toolCallId);
               options.onEvent({
                 type: "tool",
-                text: "Tool response",
+                text: name ? `Tool result: ${name}` : "Tool result",
                 data: event,
               });
             } else if (
