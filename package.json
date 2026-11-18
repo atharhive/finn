@@ -115,7 +115,7 @@
           "type": "number",
           "default": 8000,
           "minimum": 512,
-          "maximum": 64000,
+          "maximum": 32768,
           "description": "Conservative estimated token budget for repository context."
         },
         "finn.enginePath": {

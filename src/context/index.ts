@@ -42,9 +42,6 @@ export async function createContextProvider(options: { root: string; binaryPath?
       request.signal?.throwIfAborted();
       if (!Number.isSafeInteger(request.maxTokens) || request.maxTokens < 0) throw new Error('Context budget must be a nonnegative safe integer');
       const signal = AbortSignal.any([lifetime.signal, ...(request.signal ? [request.signal] : [])]);
-      const onAbort = () => { void dispose().catch(() => {}); };
-      signal.addEventListener('abort', onAbort, { once: true });
-      try {
       const scanned = await inventory(root, signal);
       // Rust is reused unchanged against a private sanitized snapshot. Disallowed
       // source files never reach its content reader, parser, graph or reporting.
@@ -111,7 +108,6 @@ export async function createContextProvider(options: { root: string; binaryPath?
         return { files, tokens, budget: request.maxTokens,
           strategy: 'Rust optimizer + source lexical ranking; whole files, conservative UTF-8 bytes of JSON {path,content,reasons}, not tokenizer precision', warnings };
       } finally { await rm(snapshot, { recursive: true, force: true }); }
-      } finally { signal.removeEventListener('abort', onAbort); }
     },
     dispose,
   };

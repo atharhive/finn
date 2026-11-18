@@ -1,5 +1,5 @@
 import { afterEach, expect, it } from 'vitest';
-import { mkdtemp, mkdir, writeFile, rm, symlink } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, rm, symlink, link } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { inventory } from '../../src/context/inventory.js';
@@ -23,4 +23,12 @@ it('denies environment scripts and API key material as well as standard credenti
 it('denies Docker auth and service-account credential files in the source inventory', async () => {
   const root = await fixture({ '.docker/config.json': 'PRIVATE', 'service-account.json': 'PRIVATE', 'src/a.ts': 'safe' });
   expect([...(await inventory(root)).files.keys()]).toEqual(['src/a.ts']);
+});
+
+it('does not copy hardlinked credential files into the source inventory', async () => {
+  const root = await fixture({ 'src/ok.ts': 'safe' });
+  const secret = join(root, '..', 'outside-secret');
+  await writeFile(secret, 'TOKEN=secret');
+  await link(secret, join(root, 'src/innocent.ts'));
+  expect([...(await inventory(root)).files.keys()]).toEqual(['src/ok.ts']);
 });

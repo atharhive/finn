@@ -5,6 +5,7 @@ import { structuredPatch, applyPatch, reversePatch, type StructuredPatch } from 
 import { withWorkspaceFile } from './files.js';
 import { startBridge, type McpBridge } from './mcp.js';
 import { abortable, executeCommand, type CommandResult } from './commands.js';
+import { isDeniedName, isHardlink } from '../security.js';
 import type { CommandRequest, ContextRequest, ContextBundle } from '../contracts.js';
 
 export interface Proposal {
@@ -37,7 +38,7 @@ export async function createWorkspace(options: WorkspaceOptions): Promise<Worksp
   let disposed = false;
   let generation = 0;
   const active = () => { if (disposed) throw new Error('Workspace is disposed'); };
-  const denied = (part: string) => /^(?:\.git|\.env(?:\..*)?|\.ssh|\.aws|\.azure|\.gnupg|\.npmrc|\.netrc|credentials(?:\..*)?|secrets?(?:\..*)?|id_(?:rsa|dsa|ecdsa|ed25519)(?:\..*)?)$/i.test(part) || /\.(?:pem|key|p12|pfx|keystore)$/i.test(part);
+  const denied = (part: string) => isDeniedName(part);
   const safePath = async (path: string, allowMissing = false): Promise<string> => {
     active();
     if (!path || path.includes('\0') || path.includes('\\') || isAbsolute(path)) throw new Error('Unsafe workspace path');
@@ -57,6 +58,7 @@ export async function createWorkspace(options: WorkspaceOptions): Promise<Worksp
   const read = async (path: string) => {
     const filename = await safePath(path); const stat = await lstat(filename);
     if (!stat.isFile() || stat.size > 1024 * 1024) throw new Error('File exceeds limit or is not a regular file');
+    if (isHardlink(stat)) throw new Error('Hardlinked files are forbidden');
     const text = await withWorkspaceFile(root, path, false, file => file.readFile('utf8'));
     if (text.includes('\0')) throw new Error('Binary files are not exposed');
     return text;

@@ -2,11 +2,12 @@ import { constants } from 'node:fs';
 import { lstat, open, readdir, realpath } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import ignore, { type Ignore } from 'ignore';
+import { isDeniedName, isHardlink } from '../security.js';
 
 const MAX_FILE_BYTES = 512 * 1024;
 const MAX_SCAN_BYTES = 16 * 1024 * 1024;
 const MAX_FILES = 4000;
-const excluded = /^(?:\.git|\.hg|\.svn|node_modules|target|dist|build|coverage|\.next|\.env(?:rc|\..*)?|api[-_]key(?:\..*)?|\.ssh|\.docker|service[-_]account(?:\..*)?|\.aws|\.azure|\.kube|\.npmrc|\.netrc|\.pypirc|\.gitignore|\.ignore|\.finnignore|.*\.(?:pem|key|p12|pfx|keystore)|id_(?:rsa|dsa|ecdsa|ed25519)(?:\.pub)?|(?:.*[._-])?(?:credentials?|secrets?|tokens?)(?:[._-].*)?)$/i;
+const ignoreNames = new Set(['.gitignore', '.ignore', '.finnignore']);
 
 // Reject symlinks at every component, including inside-root links. Never trust
 // engine-supplied contents: both the engine snapshot and output use this inventory.
@@ -22,7 +23,7 @@ async function readSafe(root: string, path: string): Promise<Buffer | undefined>
   const handle = await open(absolute, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {
     const stat = await handle.stat();
-    if (!stat.isFile() || stat.size > MAX_FILE_BYTES) return;
+    if (!stat.isFile() || isHardlink(stat) || stat.size > MAX_FILE_BYTES) return;
     // Read a bounded buffer, even if the file grows after stat.
     const buffer = Buffer.alloc(MAX_FILE_BYTES + 1);
     const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
@@ -54,7 +55,7 @@ export async function inventory(root: string, signal?: AbortSignal): Promise<{ f
         return;
       }
       const path = dir ? `${dir}/${entry.name}` : entry.name;
-      if (excluded.test(entry.name) || entry.isSymbolicLink()) continue;
+      if (isDeniedName(entry.name) || ignoreNames.has(entry.name) || entry.isSymbolicLink()) continue;
       if (rules.some(rule => rule.matcher.ignores(path.slice(rule.base ? rule.base.length + 1 : 0) + (entry.isDirectory() ? '/' : '')))) continue;
       if (entry.isDirectory()) {
         // Recheck canonical directory before enumeration.

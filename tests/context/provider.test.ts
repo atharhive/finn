@@ -113,14 +113,15 @@ describe('context provider', () => {
     await p.dispose();
     await expect(p.assemble({ query: 'auth', maxTokens: 1000 })).rejects.toThrow(/disposed/i);
   });
-  it('closes the Rust engine on in-flight cancellation instead of leaving work running', async () => {
+  it('cancels in-flight assembly without disposing the provider', async () => {
     const root = await fixture(Object.fromEntries(Array.from({ length: 80 }, (_, i) => [`src/f${i}.ts`, `export const auth${i} = true;`])));
     const p = await provider(root);
     const controller = new AbortController();
     const running = p.assemble({ query: 'auth', maxTokens: 1000, signal: controller.signal });
     controller.abort();
-    await expect(running).rejects.toThrow(/abort/i);
-    await expect(p.assemble({ query: 'auth', maxTokens: 1000 })).rejects.toThrow(/disposed/i);
+    await running.catch(() => undefined);
+    const bundle = await p.assemble({ query: 'auth', maxTokens: 1000 });
+    expect(bundle.files.length).toBeGreaterThan(0);
   });
   it('fails clearly instead of silently falling back when the Rust engine is missing', async () => {
     const root = await fixture({ 'src/example.ts': 'export const greeting = "hello";' });

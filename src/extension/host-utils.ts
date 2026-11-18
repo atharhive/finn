@@ -1,11 +1,12 @@
 import { realpath, lstat } from 'node:fs/promises';
 import { relative, isAbsolute, resolve, sep } from 'node:path';
 import { applyPatch } from 'diff';
+import { isDeniedName, isHardlink } from '../security.js';
 
 export function resolveSettings(values: Record<string, unknown>): { ready: boolean; status: string; baseUrl: string; model: string; fallbackModel?: string; contextBudget: number; binaryPath?: string } {
   const model = typeof values.model === 'string' ? values.model.trim() : '';
   const baseUrl = typeof values.trueforgeUrl === 'string' && values.trueforgeUrl.trim() ? values.trueforgeUrl.trim() : 'http://127.0.0.1:8790';
-  const contextBudget = Number.isSafeInteger(values.contextBudget) && Number(values.contextBudget) >= 512 && Number(values.contextBudget) <= 64000 ? Number(values.contextBudget) : 8000;
+  const contextBudget = Number.isSafeInteger(values.contextBudget) && Number(values.contextBudget) >= 512 && Number(values.contextBudget) <= 32768 ? Number(values.contextBudget) : 8000;
   const result = { model, baseUrl, contextBudget, fallbackModel: typeof values.fallbackModel === 'string' ? values.fallbackModel.trim() || undefined : undefined, binaryPath: typeof values.enginePath === 'string' ? values.enginePath.trim() || undefined : undefined };
   try {
     const url = new URL(baseUrl);
@@ -21,12 +22,13 @@ export async function selectionPath(root: string, filename: string): Promise<str
   const path = relative(canonicalRoot, resolve(filename));
   if (!path || isAbsolute(path) || path.split(sep).includes('..')) throw new Error('Select a file inside the first workspace folder.');
   const parts = path.split(sep);
-  const denied = /^(?:\.git|\.env(?:\..*)?|\.ssh|\.aws|\.azure|\.gnupg|\.npmrc|\.netrc|credentials(?:\..*)?|secrets?(?:\..*)?|id_(?:rsa|dsa|ecdsa|ed25519)(?:\..*)?)$|\.(?:pem|key|p12|pfx|keystore)$/i;
   let current = canonicalRoot;
   for (const part of parts) {
-    if (denied.test(part)) throw new Error('Finn cannot send credentials, secrets or Git internals.');
+    if (isDeniedName(part)) throw new Error('Finn cannot send credentials, secrets or Git internals.');
     current = resolve(current, part);
-    if ((await lstat(current)).isSymbolicLink()) throw new Error('Finn does not send selections through symbolic links.');
+    const stat = await lstat(current);
+    if (stat.isSymbolicLink()) throw new Error('Finn does not send selections through symbolic links.');
+    if (isHardlink(stat)) throw new Error('Finn does not send selections through hard links.');
   }
   const canonicalFile = await realpath(current);
   if (relative(canonicalRoot, canonicalFile).split(sep).includes('..')) throw new Error('Selection escapes workspace.');

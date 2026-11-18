@@ -58,7 +58,7 @@ export function activate(extension: vscode.ExtensionContext): void {
         let binaryPath = config.binaryPath;
         if (!binaryPath) {
           const executable = process.platform === 'win32' ? 'finn_mcp.exe' : 'finn_mcp';
-          const candidates = [join(extension.extensionPath, 'bin', `${process.platform}-${process.arch}`, executable), join(extension.extensionPath, 'bin', executable), join(extension.extensionPath, 'target', 'release', executable), join(extension.extensionPath, 'target', 'debug', executable)];
+          const candidates = [join(extension.extensionPath, 'dist', 'bin', executable), join(extension.extensionPath, 'bin', `${process.platform}-${process.arch}`, executable), join(extension.extensionPath, 'bin', executable), join(extension.extensionPath, 'target', 'release', executable), join(extension.extensionPath, 'target', 'debug', executable)];
           for (const candidate of candidates) { try { await access(candidate); binaryPath = candidate; break; } catch { /* Try the next explicitly supported location. */ } }
         }
         signal.throwIfAborted();

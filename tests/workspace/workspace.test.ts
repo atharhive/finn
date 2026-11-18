@@ -30,6 +30,7 @@ describe('workspace security', () => {
   it('denies traversal, symlinks, git and secret paths on read, search and proposals', async () => {
     await mkdir(join(root, '.git')); await writeFile(join(root, '.git/config'), 'secret');
     await writeFile(join(root, '.env.local'), 'secret'); await writeFile(join(root, 'private.pem'), 'secret');
+    await writeFile(join(root, '.envrc'), 'secret'); await writeFile(join(root, 'api-key.json'), 'secret');
     await writeFile(join(root, 'ok.txt'), 'needle'); await symlink(join(root, 'ok.txt'), join(root, 'link.txt'));
     for (const path of ['../outside', '.git/config', '.env.local', 'private.pem', 'link.txt']) {
       await expect(service.readFile(path)).rejects.toThrow();
@@ -38,6 +39,8 @@ describe('workspace security', () => {
     expect(await service.readFile('ok.txt')).toBe('needle');
     expect((await service.searchWorkspace('needle')).map(m => m.path)).toEqual(['ok.txt']);
     expect(await service.searchWorkspace('secret')).toEqual([]);
+    await expect(service.readFile('.envrc')).rejects.toThrow();
+    await expect(service.readFile('api-key.json')).rejects.toThrow();
   });
 });
 

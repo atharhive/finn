@@ -17,9 +17,9 @@ it('validates explicit TrueForge configuration and provides an actionable no-mod
 it('blocks selection from secrets, symlinks and files outside the canonical workspace', async () => {
   const root = await mkdtemp(join(tmpdir(),'finn-selection-')); roots.push(root);
   await mkdir(join(root,'src')); await writeFile(join(root,'src','main.rs'),'fn main() {}');
-  await writeFile(join(root,'.env'),'TOKEN=secret'); await symlink(join(root,'src'),join(root,'linked'));
+  await writeFile(join(root,'.env'),'TOKEN=secret'); await writeFile(join(root,'.envrc'),'export SECRET=1'); await writeFile(join(root,'api-key.json'),'{}'); await symlink(join(root,'src'),join(root,'linked'));
   expect(await selectionPath(root,join(root,'src','main.rs'))).toBe('src/main.rs');
-  for(const path of [join(root,'.env'),join(root,'linked','main.rs'),'/etc/passwd']) await expect(selectionPath(root,path)).rejects.toThrow();
+  for(const path of [join(root,'.env'),join(root,'.envrc'),join(root,'api-key.json'),join(root,'linked','main.rs'),'/etc/passwd']) await expect(selectionPath(root,path)).rejects.toThrow();
 });
 
 it('previews only the selected hunk, not other unaccepted edits', () => {
