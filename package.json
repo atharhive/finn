@@ -1,0 +1,159 @@
+{
+  "name": "finn-agent",
+  "type": "module",
+  "displayName": "Finn",
+  "version": "0.1.0",
+  "description": "A TrueForge-native coding agent with budgeted context and review-first edits.",
+  "publisher": "atharhive",
+  "license": "MIT",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/atharhive/finn.git"
+  },
+  "homepage": "https://github.com/atharhive/finn#readme",
+  "bugs": {
+    "url": "https://github.com/atharhive/finn/issues"
+  },
+  "engines": {
+    "vscode": "^1.95.0",
+    "node": ">=22.14.0"
+  },
+  "categories": [
+    "Machine Learning",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "trueforge",
+    "coding-agent",
+    "context",
+    "review",
+    "mcp"
+  ],
+  "icon": "media/icon.png",
+  "main": "./dist/extension.cjs",
+  "activationEvents": [
+    "onView:finn.agent"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Finn can read workspace files and execute explicitly approved commands."
+    },
+    "virtualWorkspaces": {
+      "supported": false
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "finn.openAgent",
+        "title": "Finn: Open Agent"
+      },
+      {
+        "command": "finn.inlineEdit",
+        "title": "Finn: Edit Selection"
+      },
+      {
+        "command": "finn.cancel",
+        "title": "Finn: Cancel Run"
+      },
+      {
+        "command": "finn.undo",
+        "title": "Finn: Undo Last Accepted Change"
+      },
+      {
+        "command": "finn.restart",
+        "title": "Finn: Restart Connections"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "finn.inlineEdit",
+        "key": "ctrl+i",
+        "mac": "cmd+i",
+        "when": "editorHasSelection && editorTextFocus && isWorkspaceTrusted"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "finn",
+          "title": "Finn",
+          "icon": "media/finn.svg"
+        }
+      ]
+    },
+    "views": {
+      "finn": [
+        {
+          "id": "finn.agent",
+          "name": "Agent",
+          "type": "webview"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Finn",
+      "properties": {
+        "finn.trueforgeUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8790",
+          "description": "Local TrueForge server URL. Start it with npm run trueforge."
+        },
+        "finn.model": {
+          "type": "string",
+          "default": "",
+          "description": "Model reference configured in TrueForge. No provider keys belong here."
+        },
+        "finn.fallbackModel": {
+          "type": "string",
+          "default": "",
+          "description": "Optional second TrueForge model reference for automatic failover."
+        },
+        "finn.contextBudget": {
+          "type": "number",
+          "default": 8000,
+          "minimum": 512,
+          "maximum": 64000,
+          "description": "Conservative estimated token budget for repository context."
+        },
+        "finn.enginePath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional path to the finn_mcp Rust binary. Defaults to a packaged binary or local target build."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:rust": "cargo test --workspace",
+    "lint:rust": "cargo fmt --all -- --check && cargo clippy --workspace --all-targets -- -D warnings",
+    "build:engine": "cargo build -p finn_mcp --release",
+    "check": "npm run typecheck && npm test && npm run build",
+    "package": "npm run build && vsce package --no-dependencies",
+    "vscode:prepublish": "npm run build",
+    "trueforge": "npx @truefoundry/trueforge@0.185.0",
+    "test:vscode": "node scripts/test-vscode.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@truefoundry/trueforge-sdk": "0.185.0",
+    "diff": "^8.0.2",
+    "ignore": "^7.0.5",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "@types/vscode": "1.95.0",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^4.1.1",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.1"
+  }
+}
