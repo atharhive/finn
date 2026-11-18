@@ -9,7 +9,7 @@ use rmcp::{
 };
 use serde::Deserialize;
 
-use crate::engine::{notify_progress, run_analysis};
+use crate::engine::run_analysis;
 use crate::handler::FinnServer;
 use crate::reporting::Reporter;
 
@@ -29,27 +29,16 @@ impl FinnServer {
     pub async fn analyze_repository(
         &self,
         Parameters(args): Parameters<AnalyzeParams>,
-        ctx: RequestContext<RoleServer>,
+        _ctx: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, ErrorData> {
-        notify_progress(&ctx, 0.1, "analyzing repository").await;
-        let started = std::time::Instant::now();
         let result = run_analysis(&args.root);
-        notify_progress(&ctx, 1.0, "analysis complete").await;
         match result {
             Ok(json) => {
-                let bytes = json.len() as u64;
-                self.mutate_state(|state| {
-                    state.record_cache_hit(&args.root, "repository analysis", bytes / 1024);
-                    state.record_run(true, started.elapsed().as_millis() as u64);
-                });
                 Reporter::from_env().record("analyze_repository", &json);
                 Ok(CallToolResult::success(vec![ContentBlock::text(json)]))
             }
             Err(message) => {
                 let report = format!("[error] {message}");
-                self.mutate_state(|state| {
-                    state.record_run(false, started.elapsed().as_millis() as u64)
-                });
                 Reporter::from_env().record("analyze_repository", &report);
                 Ok(CallToolResult::error(vec![ContentBlock::text(report)]))
             }

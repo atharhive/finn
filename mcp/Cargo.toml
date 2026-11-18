@@ -4,8 +4,8 @@ version = "1.0.0"
 edition = "2021"
 rust-version = "1.75"
 license = "MIT OR Apache-2.0"
-description = "Finn MCP server exposing the orchestration engine to agentic IDEs."
-keywords = ["mcp", "orchestration", "context", "agents"]
+description = "Finn MCP server providing repository context for TrueForge and MCP clients."
+keywords = ["mcp", "repository", "context", "analysis"]
 categories = ["development-tools"]
 
 [dependencies]
@@ -28,7 +28,3 @@ http = ["dep:axum", "rmcp/transport-streamable-http-server"]
 
 [dev-dependencies]
 tempfile = "3"
-
-[profile.release]
-lto = true
-strip = true

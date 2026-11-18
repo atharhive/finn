@@ -1,38 +1,17 @@
-//! Finn MCP server — entry point and transport setup.
+//! Finn MCP server — repository-context support for TrueForge.
 //!
-//! Exposes the Finn orchestration engine (`repository_intelligence`,
-//! `dependency_graph`, `context_optimizer`) to agentic IDEs (TrueForge, Claude
-//! Code, Cursor, ...) over the Model Context Protocol.
+//! Tools: `analyze_repository`, `build_dependency_graph`, `optimize_context`.
+//! Resources: `finn://analysis/{root}`, `finn://graph/{root}`.
+//! Prompt: `prepare_context`. Finn does not execute agents or simulate progress.
 //!
-//! Transports:
-//! * stdio (default) — `finn_mcp` (or `finn_mcp --transport stdio`)
-//! * Streamable HTTP (built with `--features http`) — `finn_mcp --transport http --addr 0.0.0.0:3000`
-//!
-//! Tools (`src/tools`):
-//! * `analyze_repository` — Repository Intelligence JSON for a repo.
-//! * `build_dependency_graph` — dependency graph JSON for a repo.
-//! * `optimize_context` — optimized context bundle JSON for a query.
-//! * `schedule_agents` / `list_agents` — orchestration agent scheduling.
-//! * `get_cache_stats` / `clear_cache` — cache visibility.
-//! * `generate_report` — execution report with timeline and statistics.
-//!
-//! Orchestration tools share process-local state (`src/state`) so MCP clients
-//! observe live agents, cache, and run history.
-//!
-//! Resources (`src/resources`): `finn://analysis/{root}` and `finn://graph/{root}`.
-//! Prompts (`src/prompts`): `orchestrate_agent`.
-//!
-//! Tools report progress (`notifications/progress`) when the client supplies a
-//! progress token, and fail with `isError: true` instead of text-prefixed
-//! errors. File-based reporting (`FINN_REPORT_DIR`) writes to disk only, so the
-//! stdio protocol stays clean.
+//! Transports: stdio (default), optional Streamable HTTP (`--features http`).
+//! Actual-result logging (`FINN_REPORT_DIR`) writes to disk, never stdout.
 
 mod engine;
 mod handler;
 mod prompts;
 mod reporting;
 mod resources;
-mod state;
 mod tools;
 
 use rmcp::ServiceExt;

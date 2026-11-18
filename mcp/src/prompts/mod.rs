@@ -5,7 +5,7 @@
 //! function next to each handler; `prompt_router()` assembles them into a
 //! single [`PromptRouter`].
 
-pub mod orchestrate;
+pub mod prepare_context;
 
 use rmcp::handler::server::router::prompt::PromptRouter;
 
@@ -14,7 +14,7 @@ use crate::handler::FinnServer;
 /// Assemble the router that registers every Finn prompt.
 pub fn prompt_router() -> PromptRouter<FinnServer> {
     PromptRouter::new().with_route((
-        FinnServer::orchestrate_agent_prompt_attr(),
-        FinnServer::orchestrate_agent,
+        FinnServer::prepare_context_prompt_attr(),
+        FinnServer::prepare_context,
     ))
 }

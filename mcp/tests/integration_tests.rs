@@ -36,6 +36,7 @@ struct McpClient {
     reader: BufReader<tokio::process::ChildStdout>,
     child: Child,
     next_id: u64,
+    notifications: Vec<Value>,
 }
 
 impl McpClient {
@@ -49,6 +50,7 @@ impl McpClient {
             reader,
             child,
             next_id: 1,
+            notifications: Vec::new(),
         };
         let initialize = client
             .request(json!({
@@ -121,6 +123,9 @@ impl McpClient {
                 continue;
             }
             let value: Value = serde_json::from_str(trimmed)?;
+            if value.get("method").is_some() && value.get("id").is_none() {
+                self.notifications.push(value.clone());
+            }
             if let Some(id) = value.get("id").and_then(Value::as_u64) {
                 if id == expected_id {
                     return Ok(value);
@@ -210,50 +215,85 @@ async fn tools_list_exposes_all_finn_tools() -> anyhow::Result<()> {
             "analyze_repository".to_string(),
             "build_dependency_graph".to_string(),
             "optimize_context".to_string(),
-            "schedule_agents".to_string(),
-            "list_agents".to_string(),
-            "advance_agents".to_string(),
-            "get_cache_stats".to_string(),
-            "clear_cache".to_string(),
-            "generate_report".to_string(),
         ])
     );
     Ok(())
 }
 
 #[tokio::test]
-async fn orchestration_tools_round_trip() -> anyhow::Result<()> {
+async fn requests_do_not_emit_synthetic_progress() -> anyhow::Result<()> {
     let (mut client, _) = McpClient::connect().await?;
-    let root = std::env::var("CARGO_MANIFEST_DIR")?;
-
-    let scheduled = client
-        .next_call(
-            "tools/call",
-            json!({
-                "name": "schedule_agents",
-                "arguments": { "root": root, "max_agents": 2, "parallelism_enabled": true }
-            }),
-        )
-        .await?;
+    let dir = tempfile::tempdir()?;
+    std::fs::write(dir.path().join("main.rs"), "fn main() {}")?;
+    let root = dir.path().to_str().unwrap();
+    let missing = dir.path().join("missing");
+    for root in [root, missing.to_str().unwrap()] {
+        for name in [
+            "analyze_repository",
+            "build_dependency_graph",
+            "optimize_context",
+        ] {
+            let result = client
+                .next_call(
+                    "tools/call",
+                    json!({
+                        "name": name,
+                        "arguments": {"root": root, "query": "main", "max_tokens": 1000},
+                        "_meta": {"progressToken": "test-progress"}
+                    }),
+                )
+                .await?;
+            assert_eq!(result["isError"], root == missing.to_str().unwrap());
+        }
+        for kind in ["analysis", "graph"] {
+            let id = client.next_id;
+            client.next_id += 1;
+            let _ = client
+                .raw_request(json!({
+                    "jsonrpc": "2.0", "id": id, "method": "resources/read",
+                    "params": {"uri": format!("finn://{kind}/{root}"),
+                        "_meta": {"progressToken": "test-progress"}}
+                }))
+                .await?;
+        }
+    }
+    assert!(
+        !client
+            .notifications
+            .iter()
+            .any(|n| n["method"] == "notifications/progress"),
+        "no invented stage percentages or completion on failure: {:?}",
+        client.notifications
+    );
     client.shutdown().await;
+    Ok(())
+}
 
-    assert_eq!(
-        scheduled.get("isError").and_then(Value::as_bool),
-        Some(false)
-    );
-    let text = scheduled
-        .get("content")
-        .and_then(Value::as_array)
-        .and_then(|items| items.first())
-        .and_then(|item| item.get("text"))
-        .and_then(Value::as_str)
-        .expect("tool text");
-    let document: Value = serde_json::from_str(text)?;
-    assert_eq!(
-        document.get("accepted").and_then(Value::as_bool),
-        Some(true)
-    );
-    assert!(document.get("agents").is_some());
+#[tokio::test]
+async fn synthetic_tools_are_rejected() -> anyhow::Result<()> {
+    let (mut client, _) = McpClient::connect().await?;
+    for name in [
+        "schedule_agents",
+        "list_agents",
+        "advance_agents",
+        "generate_report",
+        "get_cache_stats",
+        "clear_cache",
+    ] {
+        let id = client.next_id;
+        client.next_id += 1;
+        let response = client
+            .raw_request(json!({
+                "jsonrpc": "2.0", "id": id, "method": "tools/call",
+                "params": {"name": name, "arguments": {"root": "/repo"}}
+            }))
+            .await?;
+        assert_eq!(
+            response["error"]["message"], "tool not found",
+            "{name} must not execute"
+        );
+    }
+    client.shutdown().await;
     Ok(())
 }
 
@@ -294,7 +334,47 @@ async fn resources_lists_analysis_and_graph_templates() -> anyhow::Result<()> {
 }
 
 #[tokio::test]
-async fn prompts_list_exposes_orchestrate_agent() -> anyhow::Result<()> {
+async fn guidance_describes_trueforge_context_support() -> anyhow::Result<()> {
+    let (mut client, initialized) = McpClient::connect().await?;
+    let instructions = initialized["instructions"].as_str().expect("instructions");
+    assert!(instructions.contains("TrueForge"));
+    assert!(!instructions.contains("schedule_agents"));
+    assert!(!instructions.contains("generate_report"));
+    assert!(!instructions.contains("docs/context-strategy.md"));
+    let prompt = client.next_call("prompts/get", json!({
+        "name": "prepare_context", "arguments": {"root": "/repo", "task": "auth flow", "max_tokens": "3000"}
+    })).await?;
+    let text = prompt.to_string();
+    assert!(text.contains("TrueForge"));
+    assert!(text.contains("does not execute"));
+    assert!(text.contains("3000"));
+    assert!(text.contains("auth flow"));
+    client.shutdown().await;
+    Ok(())
+}
+
+#[test]
+fn readme_documents_only_implemented_context_support() {
+    let readme = include_str!("../README.md");
+    assert!(readme.contains("TrueForge"));
+    assert!(readme.contains("prepare_context"));
+    for obsolete in [
+        "IBM Bob",
+        "finn-ibm",
+        "schedule_agents",
+        "advance_agents",
+        "generate_report",
+        "get_cache_stats",
+        "FINN_API_TOKEN",
+        "docs/context-strategy.md",
+        "run-mcp-inspector.bat",
+    ] {
+        assert!(!readme.contains(obsolete), "outdated claim: {obsolete}");
+    }
+}
+
+#[tokio::test]
+async fn prompts_list_exposes_prepare_context() -> anyhow::Result<()> {
     let (mut client, _) = McpClient::connect().await?;
     let result = client.next_call("prompts/list", json!({})).await?;
     client.shutdown().await;
@@ -309,7 +389,7 @@ async fn prompts_list_exposes_orchestrate_agent() -> anyhow::Result<()> {
                 .collect::<BTreeSet<_>>()
         })
         .unwrap_or_default();
-    assert_eq!(names, BTreeSet::from(["orchestrate_agent".to_string()]));
+    assert_eq!(names, BTreeSet::from(["prepare_context".to_string()]));
     Ok(())
 }
 

@@ -1,4 +1,4 @@
-//! `orchestrate_agent` — structured orchestration prompt for a coding agent.
+//! `prepare_context` — repository-context preparation prompt for TrueForge.
 
 use rmcp::schemars::JsonSchema;
 use rmcp::{
@@ -10,32 +10,32 @@ use serde::Deserialize;
 
 use crate::handler::FinnServer;
 
-/// Arguments for the `orchestrate_agent` prompt.
+/// Arguments for the `prepare_context` prompt.
 #[derive(Debug, Deserialize, JsonSchema)]
-pub struct OrchestratePromptArgs {
+pub struct PrepareContextArgs {
     /// Absolute path of the repository to operate on.
     #[schemars(description = "Absolute path of the repository to operate on")]
     pub root: String,
-    /// The developer task the agent should orchestrate.
-    #[schemars(description = "The developer task the agent should orchestrate")]
+    /// The developer task to prepare context for.
+    #[schemars(description = "The developer task to prepare context for")]
     pub task: String,
     /// Maximum total context bundle size in tokens.
     #[schemars(description = "Maximum total context bundle size in tokens")]
-    pub max_tokens: Option<usize>,
+    pub max_tokens: Option<String>,
 }
 
 impl FinnServer {
-    /// Orchestrate an agent on a repository.
+    /// Prepare context for TrueForge without executing agent work.
     #[prompt(
-        name = "orchestrate_agent",
-        description = "Orchestrate a coding agent: analyze the repository, build the dependency graph and assemble an optimized context bundle for the task."
+        name = "prepare_context",
+        description = "Prepare repository context for TrueForge: analyze files, inspect dependencies and select relevant context. This does not execute agents."
     )]
-    pub async fn orchestrate_agent(
+    pub async fn prepare_context(
         &self,
-        Parameters(args): Parameters<OrchestratePromptArgs>,
+        Parameters(args): Parameters<PrepareContextArgs>,
     ) -> Result<Vec<PromptMessage>, ErrorData> {
         let mut messages = vec![
-            PromptMessage::new_text(Role::User, "You are orchestrating a coding agent. Execute the following pipeline against the repository root, in order:"),
+            PromptMessage::new_text(Role::User, "Finn supports TrueForge with repository context; it does not execute agents or verify task completion. Prepare context against the repository root, in order:"),
             PromptMessage::new_text(Role::User, format!(
                 "1. Analyze the repository at `{}` with the `analyze_repository` tool.",
                 args.root
@@ -61,7 +61,7 @@ impl FinnServer {
         }
         messages.push(PromptMessage::new_text(
             Role::User,
-            "Report the results to the developer in a concise summary, citing the repository root and any limitations you encountered.",
+            "Return the context and its limitations to TrueForge for planning, execution and verification. Do not claim the task has been implemented or tested based on context analysis alone.",
         ));
         Ok(messages)
     }

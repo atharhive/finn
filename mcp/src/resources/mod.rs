@@ -14,7 +14,7 @@ use rmcp::{
     RoleServer,
 };
 
-use crate::engine::{notify_progress, run_analysis, run_graph};
+use crate::engine::{run_analysis, run_graph};
 use crate::reporting::Reporter;
 
 pub fn list_resources() -> ListResourcesResult {
@@ -37,7 +37,7 @@ pub fn list_resource_templates() -> ListResourceTemplatesResult {
 
 pub async fn read_resource(
     uri: &str,
-    ctx: &RequestContext<RoleServer>,
+    _ctx: &RequestContext<RoleServer>,
 ) -> Result<ReadResourceResult, ErrorData> {
     let (_, contents) = if let Some(root) = uri.strip_prefix("finn://analysis/") {
         if root.is_empty() {
@@ -46,7 +46,6 @@ pub async fn read_resource(
                 None,
             ));
         }
-        notify_progress(ctx, 0.5, "analyzing repository").await;
         (root.to_owned(), run_analysis(root))
     } else if let Some(root) = uri.strip_prefix("finn://graph/") {
         if root.is_empty() {
@@ -55,8 +54,6 @@ pub async fn read_resource(
                 None,
             ));
         }
-        notify_progress(ctx, 0.3, "analyzing repository").await;
-        notify_progress(ctx, 0.6, "building dependency graph").await;
         (root.to_owned(), run_graph(root))
     } else {
         return Err(ErrorData::invalid_params(
@@ -65,7 +62,6 @@ pub async fn read_resource(
         ));
     };
 
-    notify_progress(ctx, 1.0, "resource ready").await;
     let json = contents.map_err(|message| {
         ErrorData::internal_error(format!("failed to read resource: {message}"), None)
     })?;

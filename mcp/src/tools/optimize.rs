@@ -10,7 +10,7 @@ use rmcp::{
 };
 use serde::Deserialize;
 
-use crate::engine::{notify_progress, run_optimize};
+use crate::engine::run_optimize;
 use crate::handler::FinnServer;
 use crate::reporting::Reporter;
 
@@ -39,7 +39,7 @@ impl FinnServer {
     pub async fn optimize_context(
         &self,
         Parameters(args): Parameters<OptimizeParams>,
-        ctx: RequestContext<RoleServer>,
+        _ctx: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, ErrorData> {
         let request = ContextRequest {
             query: args.query,
@@ -47,11 +47,7 @@ impl FinnServer {
             min_relevance: args.min_relevance,
             ..Default::default()
         };
-        notify_progress(&ctx, 0.1, "analyzing repository").await;
-        notify_progress(&ctx, 0.5, "building dependency graph").await;
-        notify_progress(&ctx, 0.8, "optimizing context").await;
         let result = run_optimize(&args.root, &request);
-        notify_progress(&ctx, 1.0, "optimization complete").await;
         match result {
             Ok(json) => {
                 Reporter::from_env().record("optimize_context", &json);

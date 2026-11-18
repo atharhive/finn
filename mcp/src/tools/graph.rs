@@ -9,7 +9,7 @@ use rmcp::{
 };
 use serde::Deserialize;
 
-use crate::engine::{notify_progress, run_graph};
+use crate::engine::run_graph;
 use crate::handler::FinnServer;
 use crate::reporting::Reporter;
 
@@ -29,12 +29,9 @@ impl FinnServer {
     pub async fn build_dependency_graph(
         &self,
         Parameters(args): Parameters<GraphParams>,
-        ctx: RequestContext<RoleServer>,
+        _ctx: RequestContext<RoleServer>,
     ) -> Result<CallToolResult, ErrorData> {
-        notify_progress(&ctx, 0.1, "analyzing repository").await;
-        notify_progress(&ctx, 0.6, "building dependency graph").await;
         let result = run_graph(&args.root);
-        notify_progress(&ctx, 1.0, "graph complete").await;
         match result {
             Ok(json) => {
                 Reporter::from_env().record("build_dependency_graph", &json);

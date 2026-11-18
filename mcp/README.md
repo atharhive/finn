@@ -1,209 +1,108 @@
 # Finn MCP Server
 
-Model Context Protocol server exposing the Finn orchestration engine —
-`repository_intelligence`, `dependency_graph`, and `context_optimizer` — to
-agentic IDEs (TrueForge, Claude Code, Cursor, ...).
-
-Transports: **stdio** (default, for local MCP clients) and **Streamable HTTP**
-(remote, with optional bearer-token auth).
+Finn provides repository context to **TrueForge** and other MCP clients through
+`repository_intelligence`, `dependency_graph`, and `context_optimizer`.
+TrueForge owns planning, agent execution, editing, and verification. Finn does
+not launch agents, simulate task progress, or certify that a task is complete.
 
 ## Tools
 
-| Tool | Description |
-|------|-------------|
-| `analyze_repository` | Repository Intelligence JSON for a repo (files, languages, entry points, modules, relationships). |
-| `build_dependency_graph` | Dependency graph JSON for a repo (nodes, edges, cycles, central files, reachability). |
-| `optimize_context` | Optimized context bundle JSON for a query (selected files, dropped files, token metrics). |
-| `schedule_agents` | Schedule orchestration agents (one per entry point, capped by `max_agents`) for a repo. |
-| `list_agents` | List the agents currently scheduled in the server process. |
-| `advance_agents` | Advance active agents by a progress step (default 25%); completed agents promote pending work. |
-| `get_cache_stats` | Cache entries, total size, and hit rate for a repo (populated by analysis runs). |
-| `clear_cache` | Clear the cache entries for a repo. |
-| `generate_report` | Execution report with timeline and runtime statistics for a repo. |
+| Tool | Arguments | Result |
+|------|-----------|--------|
+| `analyze_repository` | `root` | Files, languages, entry points, modules, relationships and measured analysis metrics. |
+| `build_dependency_graph` | `root` | Dependency nodes, edges, cycles, central files and reachability. |
+| `optimize_context` | `root`, `query`, optional `max_tokens`, `min_relevance` | Selected context, dropped files and token estimates. |
 
-The orchestration tools (`schedule_agents`, `list_agents`, `get_cache_stats`,
-`clear_cache`, `generate_report`) share process-local state — scheduled
-agents, cache entries, and run history — so MCP clients observe live activity
-instead of mock data. Set `FINN_STATE_DIR` to a directory to persist this
-state across server restarts as `<dir>/finn-state.json`; unset, it remains
-process-local.
+`root` is an absolute local repository path. Analysis and relevance are heuristic;
+inspect source and run appropriate tests before treating results as proof.
+Each request analyzes the repository afresh. The MCP layer stores no reusable
+analysis cache and exposes no cache counters or persistent execution state.
+It emits no stage-percentage notifications. Results are returned after the engine
+finishes; tool failures have `isError: true`.
 
-## Resources
+## Resources and prompt
 
-| URI template | Description |
-|--------------|-------------|
-| `finn://analysis/{root}` | Repository Intelligence JSON document for a repository root. |
-| `finn://graph/{root}` | Dependency graph JSON document for a repository root. |
+- `finn://analysis/{root}`: repository analysis JSON.
+- `finn://graph/{root}`: dependency graph JSON.
+- `prepare_context`: guidance to analyze, inspect dependencies, and optimize context
+  for TrueForge, taking `root`, `task`, and optional `max_tokens`. This prompt
+  prepares context; it does not carry out the developer task.
 
-`{root}` is substituted with the absolute repository path, e.g.
-`finn://analysis//mnt/e/Codebase/Hackathon/finn-ibm/finn/mcp`.
+For `/path/to/repository`, the analysis URI is
+`finn://analysis//path/to/repository`.
 
-## Prompts
+## Build and verify
 
-| Prompt | Description |
-|--------|-------------|
-| `orchestrate_agent` | Pipeline instruction (analyze → graph → optimize) for a given `root` and `task`. |
+Run from the workspace root with a Rust toolchain supporting the workspace and
+its resolved dependencies:
 
-## Prerequisites
-
-- Rust toolchain (stable, MSRV 1.75) on the same OS as the MCP client.
-- The `finn` engine workspace (this crate depends on it via `path` deps):
-  `../crates/{repository_intelligence,dependency_graph,context_optimizer}`.
-
-## Build
-
-From this directory:
-
-```powershell
-# Windows
-cargo build
-# binary: target\debug\finn_mcp.exe
-
-# Linux / WSL
-cargo build
-# binary: target/debug/finn_mcp
+```sh
+cargo build -p finn_mcp
+cargo test -p finn_mcp
+cargo fmt --all -- --check
+cargo clippy -p finn_mcp --all-targets -- -D warnings
 ```
 
-To include the Streamable HTTP transport:
+The executable is `target/debug/finn_mcp` (or `target\debug\finn_mcp.exe`
+on Windows), relative to the workspace root. Build on the same OS as the client;
+Linux executables do not run on Windows.
 
-```powershell
-cargo build --features http
+## Local MCP setup
+
+Configure TrueForge's MCP client to run the absolute executable path using stdio:
+
+```json
+{
+  "mcpServers": {
+    "finn": {
+      "command": "/path/to/finn/target/debug/finn_mcp",
+      "args": ["--transport", "stdio"]
+    }
+  }
+}
 ```
 
-Note: the binary must be built on the OS where the MCP client runs. A WSL
-build produces a Linux ELF that will not run on Windows and vice versa.
+Example `optimize_context` arguments:
 
-## Run Tests
-
-```powershell
-cargo test          # unit tests, incl. reporting
-cargo build         # confirm zero warnings
+```json
+{"root":"/path/to/repository","query":"where is authentication handled","max_tokens":3000}
 ```
 
-## Test with MCP Inspector (Windows)
+## Optional result logging
 
-Easiest: double-click `run-mcp-inspector.bat` — it creates the reports dir,
-builds the binary if missing, and launches MCP Inspector.
+Set `FINN_REPORT_DIR` to save actual tool results and successful resource reads.
+Timestamped `.json` files contain raw results (errors may be plain text);
+`report.md` appends human-readable summaries. This is result logging, not an
+execution timeline. Logging is disabled when the variable is unset or empty,
+and never writes to protocol stdout. Logs can contain repository details; use
+a private directory outside the analyzed repository to avoid scanning them later.
 
-Or manually:
+## Optional Streamable HTTP
 
-```powershell
-set FINN_REPORT_DIR=E:\Codebase\Hackathon\finn-ibm\finn\mcp\reports
-npx @modelcontextprotocol/inspector
+```sh
+cargo build -p finn_mcp --features http
+./target/debug/finn_mcp --transport http --addr 127.0.0.1:3000
 ```
 
-In the Inspector connection form:
+The MCP endpoint is `/mcp`; `/health` returns `ok`.
+This server has **no built-in authentication**. Bind to loopback for local use;
+use an authenticated reverse proxy before exposing it to a network. The CLI's
+HTTP address default is `0.0.0.0:3000`, so set `--addr` explicitly.
 
-- Transport: `stdio`
-- Command: `E:\Codebase\Hackathon\finn-ibm\finn\mcp\target\debug\finn_mcp.exe`
-- Args: *(empty)*
-- Environment variables: `FINN_REPORT_DIR=E:\Codebase\Hackathon\finn-ibm\finn\mcp\reports`
-
-Then call the three tools with a repository path, e.g.:
-
-- `analyze_repository` → `{"root": "E:\\Codebase\\Hackathon\\finn-ibm\\finn"}`
-- `build_dependency_graph` → `{"root": "E:\\Codebase\\Hackathon\\finn-ibm\\finn.extension"}`
-- `optimize_context` →
-  `{"root": "E:\\Codebase\\Hackathon\\finn-ibm\\finn.extension", "query": "where is the main runtime entry point", "max_tokens": 3000}`
-
-## Get the Reports
-
-When `FINN_REPORT_DIR` is set, every tool call writes into that directory:
-
-- `<tool>-<YYYYMMDD-HHMMSS-mmm>.json` — the raw pretty-printed JSON result of
-  each call (one file per tool call).
-- `report.md` — a single combined human-readable markdown report, appended on
-  every call (one `### <tool>` section per call).
-
-Example `report.md`:
-
-```markdown
-### analyze_repository — 2026-08-28 15:55:15 UTC
-
-- **root:** E:\Codebase\Hackathon\finn-ibm\finn.extension
-- **files:** 46 · **dirs:** 17 · **bytes:** 175124
-- **languages:** json=3, markdown=1, typescript=39
-- **entry points:** src/extension.ts (0.85)
-- **modules:** 10 · **relationships:** 112
-```
-
-If `FINN_REPORT_DIR` is unset or empty, reporting is disabled (no files written)
-and the stdio transport stays clean. Reporting never writes to stdout.
-
-## Environment Variables
-
-| Variable | Purpose | Default |
-|----------|---------|---------|
-| `FINN_REPORT_DIR` | Directory for timestamped JSON + `report.md` output | *(disabled)* |
-| `FINN_API_TOKEN` | Bearer token required for HTTP requests | *(auth disabled)* |
-| `FINN_ALLOWED_HOSTS` | Comma-separated `Host` header allow-list | localhost, 127.0.0.1, [::1] (+ bind host when `0.0.0.0`) |
-| `FINN_ALLOWED_ORIGINS` | Comma-separated `Origin` allow-list | empty (Origin not enforced) |
-
-## Serve over HTTP (remote access)
-
-Build with the `http` feature, then run with `--transport http`:
-
-```powershell
-# Windows (remote)
-set FINN_API_TOKEN=super-secret-token
-cargo run --features http -- --transport http --addr 0.0.0.0:3000
-
-# Linux / WSL
-FINN_API_TOKEN=super-secret-token \
-cargo run --features http -- --transport http --addr 0.0.0.0:3000
-```
-
-MCP clients connect to `http://<host>:3000/mcp`.
-
-- **Auth:** when `FINN_API_TOKEN` is set, every request must include
-  `Authorization: Bearer <token>`; otherwise requests are rejected with 401.
-  When unset/empty, auth is disabled.
-- **Hosts:** when `FINN_ALLOWED_HOSTS` is set, only those comma-separated host
-  values are accepted in the `Host` header. When unset, localhost + the bind
-  host are allowed.
-- **Origins:** set `FINN_ALLOWED_ORIGINS` to restrict the `Origin` header of
-  browser-based clients.
-
-### Smoke test over HTTP
-
-```bash
-# 1. initialize (capture the Mcp-Session-Id response header)
-curl -i -X POST http://127.0.0.1:3000/mcp \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  -H 'Authorization: Bearer <token>' \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"curl","version":"0.1"}}}'
-
-# 2. list tools (reuse the Mcp-Session-Id header value)
-curl -X POST http://127.0.0.1:3000/mcp \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  -H 'Mcp-Session-Id: <session-id>' \
-  -H 'Authorization: Bearer <token>' \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
-
-# 3. call a tool
-curl -X POST http://127.0.0.1:3000/mcp \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  -H 'Mcp-Session-Id: <session-id>' \
-  -H 'Authorization: Bearer <token>' \
-  -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"build_dependency_graph","arguments":{"root":"/mnt/e/Codebase/Hackathon/finn-ibm"}}}'
-```
+| Variable | Purpose |
+|----------|---------|
+| `FINN_ALLOWED_HOSTS` | Comma-separated HTTP Host allow-list; defaults to localhost, 127.0.0.1 and [::1] (plus unspecified bind addresses when applicable). |
+| `FINN_ALLOWED_ORIGINS` | Comma-separated browser Origin allow-list, passed to transport origin validation. |
+| `FINN_REPORT_DIR` | Optional directory for actual result logs. |
 
 ## Layout
 
-```
-src/
-  main.rs        Entry point + transport setup (stdio/http CLI) + auth middleware
-  lib.rs         Library facade (integration tests)
-  handler.rs     FinnServer type + ServerHandler impl (get_info, resources) + tool/prompt macros
-  engine.rs      Engine bridge (analysis/graph/optimize) + progress notifications
-  reporting.rs   File-based reporting (JSON + markdown summary)
-  tools/         One file per tool (analyze, graph, optimize) + ToolRouter
-  prompts/       One file per prompt (orchestrate_agent) + PromptRouter
-  resources/     Resource helpers (finn://analysis/{root}, finn://graph/{root})
-tests/
-  integration_tests.rs   E2E: spawns the binary, drives raw JSON-RPC over stdio
-run-mcp-inspector.bat   Launches MCP Inspector with reporting enabled
-```
+- `src/engine.rs`: bridge to the three repository engine crates.
+- `src/handler.rs`: MCP capabilities, instructions and resource endpoints.
+- `src/tools/`: analysis, graph and context tool handlers.
+- `src/prompts/`: context-preparation prompt.
+- `src/resources/`: repository-backed resource templates and reads.
+- `src/reporting.rs`: optional actual-result logs.
+- `tests/integration_tests.rs`: real-binary stdio MCP tests.
+
+Original license notices are retained in `LICENSE`.

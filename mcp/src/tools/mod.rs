@@ -5,12 +5,9 @@
 //! next to each handler; `tool_router()` assembles them into a single
 //! [`ToolRouter`].
 
-pub mod agents;
 pub mod analyze;
-pub mod cache;
 pub mod graph;
 pub mod optimize;
-pub mod report;
 
 use rmcp::handler::server::router::tool::ToolRouter;
 
@@ -30,23 +27,5 @@ pub fn tool_router() -> ToolRouter<FinnServer> {
         .with_route((
             FinnServer::optimize_context_tool_attr(),
             FinnServer::optimize_context,
-        ))
-        .with_route((
-            FinnServer::schedule_agents_tool_attr(),
-            FinnServer::schedule_agents,
-        ))
-        .with_route((FinnServer::list_agents_tool_attr(), FinnServer::list_agents))
-        .with_route((
-            FinnServer::advance_agents_tool_attr(),
-            FinnServer::advance_agents,
-        ))
-        .with_route((
-            FinnServer::get_cache_stats_tool_attr(),
-            FinnServer::get_cache_stats,
-        ))
-        .with_route((FinnServer::clear_cache_tool_attr(), FinnServer::clear_cache))
-        .with_route((
-            FinnServer::generate_report_tool_attr(),
-            FinnServer::generate_report,
         ))
 }

@@ -8,7 +8,6 @@ pub mod handler;
 pub mod prompts;
 pub mod reporting;
 pub mod resources;
-pub mod state;
 pub mod tools;
 
 pub use handler::FinnServer;
