@@ -1,0 +1,6 @@
+{
+  "type": "custom",
+  "name": "task-c-unreachable",
+  "baseUrl": "http://127.0.0.1:1/v1",
+  "models": [{ "name": "unreachable", "modelId": "deliberately-unreachable", "properties": {} }]
+}

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Finn — submission write-up DRAFT</title>
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #17232c; font: 10.3pt/1.43 Arial, sans-serif; background: #ddd; }
+.page { width: 210mm; min-height: 296.5mm; padding: 17mm 18mm 15mm; background: white; margin: 6mm auto; position: relative; }
+.page:not(:last-child) { break-after: page; }
+h1 { font-size: 26pt; margin: 0 0 3mm; letter-spacing: -1px; }
+h2 { font-size: 13pt; margin: 7mm 0 2.5mm; border-top: 1px solid #c9d4dc; padding-top: 3mm; }
+p { margin: 0 0 3mm; } .label { color: #8b3c17; font-weight: bold; font-size: 9pt; }
+code { font: 9pt monospace; overflow-wrap: anywhere; }
+table { border-collapse: collapse; width: 100%; font-size: 8.2pt; line-height: 1.35; }
+th, td { border-bottom: 1px solid #ccd6de; text-align: left; padding: 2mm 1.5mm; vertical-align: top; }
+th { background: #eaf0f4; } .small { font-size: 9pt; } footer { margin-top: 7mm; color: #5e6a73; font-size: 8pt; }
+ul { margin: 1mm 0 3mm; padding-left: 5mm; }
+.page:nth-of-type(2) { font-size: 9.3pt; line-height: 1.35; }
+.page:nth-of-type(2) h2 { margin-top: 4mm; padding-top: 2mm; }
+.page:nth-of-type(2) table { font-size: 7.8pt; line-height: 1.25; }
+.page:nth-of-type(2) th, .page:nth-of-type(2) td { padding: 1.4mm 1.5mm; }
+@media print { body { background: white; } .page { margin: 0; } }
+</style>
+<section class="page">
+<div class="label">DRAFT — identity, model setup and recording evidence incomplete</div>
+<h1>Finn</h1><p>A TrueForge-native, review-first coding agent for VS Code.</p>
+<h2>1. Team</h2>
+<p><strong>FILL:</strong> registered team name and ID; every member's name, college or employer, and GitHub handle. Public repository: <code>https://github.com/atharhive/finn</code>.</p>
+<h2>2. Starting point</h2>
+<p>Finn reuses the MIT-licensed repository-intelligence, dependency-graph, context-selection and MCP foundation from <code>https://github.com/dev-Ninjaa/ink</code>, upstream revision <code>5c32267d8f92b0dc06998f6481a1ca5dca726d6d</code>. Fresh Git history is not from-scratch authorship. Original attribution and MIT terms are retained in third-party notices and component licences.</p>
+<p>Our delta adds a TrueForge SDK client, task-aware context bridge, guarded editor MCP tools, and native proposal review/undo. The inherited synthetic agent-scheduling surface was removed. The demo target is Flask 3.1.3, commit <code>22d924701a6ae2e4cd01e9a15bbaf3946094af65</code>.</p>
+<h2>3. Architecture on TrueForge</h2>
+<p>The extension is a client of local TrueForge <strong>0.185.0</strong>; TrueForge owns model calls, the tool loop and session/turn state. Finn registers a per-connection, loopback HTTP MCP server with bearer authentication, creates an inline agent and renders streamed events. Provider credentials remain in TrueForge, never in Finn or the repository.</p>
+<p>Editor capabilities exposed as MCP tools are <code>assemble_context</code>, <code>read_file</code>, <code>search_workspace</code>, <code>propose_edit</code> and <code>run_command</code>. Proposed replacement content stays in memory. A human reviews and accepts individual hunks before source writes; undo protects against overwriting later edits. Terminal commands require separate explicit human approval and run as the local user, not in a security sandbox.</p>
+<p>Approval is currently enforced by Finn's editor boundary, <em>not</em> TrueForge tool-approval events. The default agent enables TrueForge compaction and disables sandbox, memory and web search; optional configured skills can require a sandbox. Meaningful use of compaction/skills must be demonstrated in the final session before any top-anchor claim. Cancellation requests remote cancellation and discards pending proposals without undoing edits already accepted by the human.</p>
+<footer>Draft source · 1 / 3 · Replace placeholders and verify the final exported PDF.</footer>
+</section>
+<section class="page">
+<h2>4. How context is selected</h2>
+<p>Finn builds a guarded inventory, excludes secret/ignored/out-of-workspace inputs, and passes a private sanitized snapshot to the Rust repository/dependency optimizer. It adds task-term scoring, resolves explicit <code>@file</code>/<code>@symbol</code> mentions and packs selected excerpts under the configured budget (default <strong>8,000 estimated tokens</strong>). Selected paths, reasons and warnings are returned to the agent; Task B must visibly show automatic discovery, not prompt-supplied filenames.</p>
+<p>The budget is a conservative estimate, not an exact tokenizer guarantee. Lexical and dependency signals are cheap and explainable but can miss semantically relevant code. Context selection is separate from the model's own context-window compaction; neither a configured budget nor a template is proof of live behaviour.</p>
+<h2>5. Model setup</h2>
+<p><strong>NOT CONFIGURED / NOT MEASURED:</strong> fill every model used, provider, endpoint/host, whether local or remote, approximate actual cost and measurement basis. No successful model-backed fixed-task run is currently claimed. Runtime model identity must not be inferred from development coding assistants.</p>
+<p>Configure a catalog or OpenAI-compatible provider in TrueForge Settings, set <code>finn.model</code> to its <code>provider/model</code> reference and restart Finn connections. The checked-in SDK-shaped examples are validated against 0.185.0; their model IDs are placeholders. A second real configured model may be set as fallback, but automatic takeover must be recorded before claiming that anchor.</p>
+<h2>6. Scorecard</h2>
+<p class="small">All timestamps are intentionally <strong>NOT RECORDED</strong>. Replace with final-video times and only claims actually visible. No score is claimed by this draft.</p>
+<table><thead><tr><th>Criterion</th><th>Max</th><th>Timestamp</th><th>Evidence required / current claim</th></tr></thead><tbody>
+<tr><td>A1 Inline edit</td><td>10</td><td>NOT RECORDED</td><td>Selected A function; real diff; per-hunk accept/reject. Unclaimed.</td></tr>
+<tr><td>A2 Agent mode</td><td>10</td><td>NOT RECORDED</td><td>B discovers ≥3 implementation/test/docs files without names. Unclaimed.</td></tr>
+<tr><td>A3 Streaming/cancel</td><td>10</td><td>NOT RECORDED</td><td>Live tokens, immediate cancel, consistent workspace. Unclaimed.</td></tr>
+<tr><td>B1 Context</td><td>15</td><td>NOT RECORDED</td><td>B retrieval reasons and size budget visible. Unclaimed.</td></tr>
+<tr><td>B2 Diff safety</td><td>10</td><td>NOT RECORDED</td><td>Review before writes; working per-hunk acceptance and undo. Unclaimed.</td></tr>
+<tr><td>B3 Resilience</td><td>10</td><td>NOT RECORDED</td><td>Bad provider C, error/retry/fallback, responsive UI, clean Git. Unclaimed.</td></tr>
+<tr><td>B4 Harness depth</td><td>10</td><td>NOT RECORDED</td><td>Actual TrueForge B session and meaningful harness feature. Unclaimed.</td></tr>
+<tr><td>C1 Video</td><td>10</td><td>NOT RECORDED</td><td>≤4 minutes, A/B/C in order, readable real verification. Unclaimed.</td></tr>
+<tr><td>C2 Write-up</td><td>15</td><td>NOT RECORDED</td><td>Final PDF with decisions, costs, timestamps and limitations. Draft only.</td></tr>
+</tbody></table>
+<footer>Draft source · 2 / 3 · A clean C snapshot alone does not prove a failed-model run.</footer>
+</section>
+<section class="page">
+<h2>7. Tools used</h2>
+<p>Implementation and checks use TypeScript/Node, Rust/Cargo, VS Code APIs, the MCP SDK, TrueForge SDK 0.185.0, Vitest and Flask's pytest CLI tests in an isolated Python environment prepared with uv (venv/pip fallback). <strong>FILL:</strong> actual developer tool versions and every AI coding assistant/model used, including Hermes Agent and its actual configured development model. Do not invent team-specific tools or costs.</p>
+<p>Preparation clones only the official Flask release into disposable external directories. Verification executes the actual Python function, actual CLI help and test suite, and actual config command against an external synthetic app. It does not inject task implementations, generate accepted changes, or replace the TrueForge agent.</p>
+<h2>8. Known limitations and what you would do with another month</h2>
+<p>The live-model acceptance gate remains open. Preparation was exercised against the official full SHA and upstream <code>tests/test_cli.py</code> returned <strong>58 passed</strong>. The pristine repository correctly failed Task A's off/n/docstring probes and Task B's command/edit-count probes. The before/after Task C comparison passed for an untouched clean checkout; <strong>that is filesystem-only harness validation, not a resilience demonstration</strong>. No successful A/B/C video or measured runtime model cost is claimed.</p>
+<p>Current trade-offs include approximate token accounting, lexical retrieval blind spots, local-only infrastructure, pending real-world provider testing and approval at the editor boundary rather than harness-driven review. Approved terminal commands can write files; isolation and deliberate approval remain essential. Pending proposals are not durable across restart. Ignored files/Git internals are excluded from the C hash audit.</p>
+<p>With another month we would complete repeated model-backed acceptance across independent providers, measure latency/retrieval quality, improve symbol/dependency ranking and indexing, test long-session compaction, deepen harness-native approval integration, and add cross-platform packaging/host coverage. These are proposed improvements, not completed capabilities.</p>
+<p class="small"><strong>Before submission:</strong> configure a real model; record exact fixed tasks A → B → C with no instruction-to-diff cuts; show B's TrueForge session, review/undo, streaming/cancellation and terminal verification; fill this draft's identity/model/tool/timestamp placeholders; verify the exported PDF is 1–3 pages and all three submission links are public. Full reproduction and evidence rules are in <code>docs/demo.md</code>, <code>docs/scorecard.md</code> and <code>docs/submission-checklist.md</code>.</p>
+<footer>Draft source · 3 / 3 · Not a final submission; claims require actual recorded evidence.</footer>
+</section></html>

@@ -1,0 +1,6 @@
+{
+  "type": "custom",
+  "name": "local",
+  "baseUrl": "http://127.0.0.1:11434/v1",
+  "models": [{ "name": "demo-model", "modelId": "REPLACE_WITH_YOUR_SERVED_MODEL_ID", "properties": {} }]
+}
