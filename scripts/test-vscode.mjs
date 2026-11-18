@@ -12,7 +12,7 @@ if (process.platform === 'linux' && !process.env.DISPLAY && !process.argv.includ
 await mkdir('dist/test', { recursive: true });
 await build({ entryPoints: ['tests/vscode/index.ts'], outfile: 'dist/test/index.cjs', bundle: true, platform: 'node', format: 'cjs', external: ['vscode'], target: 'node20' });
 await runTests({
-  version: 'stable',
+  version: process.env.FINN_VSCODE_VERSION || '1.95.3',
   extensionDevelopmentPath: path.resolve('.'),
   extensionTestsPath: path.resolve('dist/test/index.cjs'),
   launchArgs: ['--no-sandbox', '--disable-gpu', '--disable-workspace-trust', '--skip-welcome', '--skip-release-notes', '--user-data-dir=' + path.resolve('.vscode-test/user-data')],

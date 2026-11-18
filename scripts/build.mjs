@@ -5,7 +5,7 @@ import path from 'node:path';
 
 await mkdir('dist', { recursive: true });
 await build({
-  entryPoints: ['src/extension/extension.ts'],
+  entryPoints: ['src/extension/index.ts'],
   outfile: 'dist/extension.cjs',
   bundle: true,
   platform: 'node',

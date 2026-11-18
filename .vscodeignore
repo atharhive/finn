@@ -2,6 +2,9 @@
 **/node_modules/**
 **/target/**
 **/src/**
+.vscode/**
+dist/test/**
+**/*.map
 **/tests/**
 **/.vscode-test/**
 **/.finn/**

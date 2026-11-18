@@ -137,7 +137,7 @@
     "check": "npm run typecheck && npm test && npm run build",
     "package": "npm run build && vsce package --no-dependencies",
     "vscode:prepublish": "npm run build",
-    "trueforge": "npx @truefoundry/trueforge@0.185.0",
+    "trueforge": "node scripts/start-trueforge.mjs",
     "test:vscode": "node scripts/test-vscode.mjs"
   },
   "dependencies": {

@@ -1,0 +1,39 @@
+name: Package Finn
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            target: linux-x64
+          - os: windows-latest
+            target: win32-x64
+          - os: macos-14
+            target: darwin-arm64
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: npm ci
+      - run: npm run build:engine
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run package -- --target ${{ matrix.target }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: finn-${{ matrix.target }}
+          path: '*.vsix'
+          if-no-files-found: error
