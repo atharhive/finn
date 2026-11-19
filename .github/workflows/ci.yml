@@ -1,8 +1,7 @@
 name: Verify Finn
+# Hosted runners are unavailable on this account (Actions billing lock), so the
+# suite runs locally and through manual dispatch instead of on every push.
 on:
-  push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
 permissions:
   contents: read
