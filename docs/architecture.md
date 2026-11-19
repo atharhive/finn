@@ -24,7 +24,7 @@ The four modules are independently testable: `src/agent`, `src/context`,
 `src/workspace`, and `src/extension`. Protocol contracts live in
 `src/contracts.ts`. The Rust scanner/graph/selector under `crates` supplies the
 reused foundation; no upstream Git objects are part of Finn's history. See
-`THIRD_PARTY_NOTICES.md` for immutable provenance.
+`PROVENANCE.md` for immutable provenance.
 
 ## Safety boundaries
 

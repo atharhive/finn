@@ -194,8 +194,6 @@ The package bundles a native Rust binary, so build on the target platform: `linu
 
 ## Module map
 
-### Module map
-
 | Path | Responsibility |
 | --- | --- |
 | `src/agent` | TrueForge sessions, turns, event streaming, retry, fallback, cancellation |
@@ -212,17 +210,40 @@ Contracts live in `src/contracts.ts` and are shared by all four modules, so the 
 
 Built at **Techfest, IIT Bombay** for the **Forge-a-thon**, on top of **TrueFoundry TrueForge**. Thanks to TrueFoundry for a genuinely local harness with real session, streaming and MCP semantics, and to the Techfest organisers for a problem statement that rewards engineering rather than stunts. Thanks also to the VS Code extension API maintainers and the Rust MCP ecosystem, whose primitives saved us from inventing a worse version of them.
 
-## Provenance
+## From Ink to Finn
+
+Finn's engine was not invented here in a vacuum. It comes from **Ink**, our previous project, and that history is the honest reason this repo exists.
+
+Ink was a Rust repository-intelligence engine: it scanned a codebase, built a dependency graph and decided which files actually mattered for a task. It won an **IBM hackathon**, which paid for **$1,600 of IBM TechXchange tickets**. It also taught the more useful lesson: retrieval alone does not make a coding agent. Ink could point at the right file, but its agent loop was scripted, so it always looked busy without ever being trusted with a real edit.
+
+Finn keeps the engine and rebuilds everything around it.
+
+| Concern | Ink | Finn |
+| --- | --- | --- |
+| Agent loop | Scripted orchestration inside the MCP service | TrueForge owns sessions, turns, tools, streaming, approvals and compaction |
+| Writes | Tool-level edits | In-memory proposals, per-hunk human acceptance, undo journal |
+| Safety | Workspace scan boundaries | Canonical paths, symlink and hardlink rejection, `.git` and credential denial, bearer-authenticated loopback MCP with `Host` and `Origin` checks |
+| Context | Retrieval results | Budgeted bundles with per-file reasons and explicit `@file` / `@symbol` mentions |
+| Interface | Panel front end | Native commands, `Ctrl+I` inline edits, diff previews, streamed tool events, CSP-hardened webview |
+
+The synthetic agent-scheduling surface was deleted rather than wrapped, because a harness that only looks like it is running is worse than no harness. Credit where it is due: the scanner and graph are still the best part of the retrieval story, and they started there.
 
 <details>
-<summary><strong>Third-party code and licensing</strong></summary>
+<summary><strong>Attribution and licence terms</strong></summary>
 
-Finn reuses the repository-intelligence, dependency-graph, context-selection and MCP foundation from [Ink](https://github.com/dev-Ninjaa/ink) at upstream commit `5c32267d8f92b0dc06998f6481a1ca5dca726d6d`. This repository starts a fresh Git history, which is not a claim of from-scratch authorship.
+The reused engine comes from [Ink](https://github.com/dev-Ninjaa/ink) at commit `5c32267d8f92b0dc06998f6481a1ca5dca726d6d`. Finn starts a fresh Git history, which is not a claim of from-scratch authorship.
 
-The retained engine was rebranded and adapted for a TrueForge-native agent. Original copyright and MIT terms are preserved in `licenses/ink-MIT.txt`, and the exact scope of reuse is recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). New Finn code is MIT licensed; dependencies keep their own licences.
+Ink's copyright and MIT terms are preserved in `licenses/ink-MIT.txt`, and the scope of reuse is recorded in [PROVENANCE.md](PROVENANCE.md). New Finn code is MIT licensed; dependencies keep their own licences.
 
 </details>
 
 ## Licence
 
-MIT for new Finn code. See [LICENSE](LICENSE) and the notices above.
+MIT for new Finn code. See [LICENSE](LICENSE) and [PROVENANCE.md](PROVENANCE.md) for inherited terms.
+
+---
+
+<p align="center">
+  Built with <span title="and a lot of review diffs">❤️</span> by <a href="https://github.com/atharhive"><strong>Athar</strong></a><br/>
+  <sub>Forge-a-thon, Techfest IIT Bombay · on TrueFoundry TrueForge</sub>
+</p>
