@@ -1,25 +1,166 @@
 <p align="center"><img src="media/banner.png" alt="Finn: find the right code, review every change" width="100%" /></p>
 
-# Finn
+<h1 align="center">Finn</h1>
 
-Coding agents need the right context and a safe way to change files. Finn combines
-a Rust repository-intelligence engine with a TrueForge-owned agent loop and a
-VS Code review surface. Models propose changes; you decide what reaches disk.
+<p align="center"><strong>A review-first coding agent for VS Code, running on TrueFoundry TrueForge.</strong><br/>
+Task-aware context from a Rust engine. Every model edit lands as a proposal you accept hunk by hunk.</p>
 
-[Architecture](docs/architecture.md) · [Demo](docs/demo.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md)
+<p align="center">
+  <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-0ea5a4?style=flat-square" />
+  <img alt="Tests: 89 passing" src="https://img.shields.io/badge/tests-89%20passing-2ea043?style=flat-square" />
+  <img alt="Pre-release" src="https://img.shields.io/badge/status-pre--release-f59e0b?style=flat-square" />
+  <img alt="Node 22.14+" src="https://img.shields.io/badge/node-%E2%89%A522.14-339933?style=flat-square&logo=nodedotjs&logoColor=white" />
+  <img alt="VS Code 1.95+" src="https://img.shields.io/badge/VS%20Code-%5E1.95-007acc?style=flat-square&logo=visualstudiocode&logoColor=white" />
+  <img alt="TrueForge 0.185.0" src="https://img.shields.io/badge/TrueForge-0.185.0-6366f1?style=flat-square" />
+</p>
 
-## Status
+<p align="center">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square&logo=typescript&logoColor=white" />
+  <img alt="Rust" src="https://img.shields.io/badge/Rust-stable-000000?style=flat-square&logo=rust&logoColor=white" />
+  <img alt="Model Context Protocol" src="https://img.shields.io/badge/MCP-streamable%20HTTP-6b7280?style=flat-square" />
+  <img alt="SDK" src="https://img.shields.io/badge/%40truefoundry%2Ftrueforge--sdk-0.185.0-4338ca?style=flat-square" />
+  <img alt="Zod" src="https://img.shields.io/badge/Zod-validated-3e67b1?style=flat-square" />
+  <img alt="esbuild" src="https://img.shields.io/badge/esbuild-bundled-ffcf00?style=flat-square" />
+  <img alt="Vitest" src="https://img.shields.io/badge/Vitest-89%20specs-6da13a?style=flat-square" />
+  <img alt="Cargo" src="https://img.shields.io/badge/Cargo-workspace-f46623?style=flat-square" />
+</p>
 
-Pre-release. The implementation is being verified against real MCP transports and
-a real VS Code extension host. A live coding-agent demo additionally requires a
-working model configured in TrueForge. Do not confuse passing test doubles with
-successful live-model execution. See [the scorecard](docs/scorecard.md) for evidence
-and remaining verification.
+> [!IMPORTANT]
+> Finn holds no provider key and never calls a model provider. All reasoning, tool execution and sessions belong to **TrueForge**, which must be running locally. Without a configured model in TrueForge, Finn shows an explicit setup state instead of pretending to work.
+
+> [!WARNING]
+> Approved terminal commands run as your local user and are **not** sandboxed. Review every command and use a disposable clone for untrusted work. Details in [SECURITY.md](SECURITY.md).
+
+## Why this exists
+
+Coding agents fail in two boring ways: they read the wrong files, and they write before you look. Finn treats both as design problems rather than prompt suggestions.
+
+- **Retrieval is a subsystem, not a guess.** A Rust scanner, dependency graph and budgeted selector assemble task-aware context with per-file reasons and an enforced token budget.
+- **Edits are proposals, never writes.** The agent's only write tool stages full-content replacements in memory. Nothing touches disk until you accept a hunk.
+- **The harness is borrowed, not rebuilt.** TrueForge owns sessions, turns, streaming, approvals and compaction. Finn supplies the editor, the context and the review boundary.
+- **Cancellation is honest.** Stopping a turn kills the remote turn, discards pending proposals and leaves already-accepted edits alone.
+- **Failures are visible.** Missing model, dead provider, stale file and rejected approval all surface as errors, not silent mocks.
+
+```mermaid
+flowchart LR
+  subgraph editor["VS Code extension host"]
+    sel["Selection + instruction"] --> ctrl["FinnController"]
+    ctrl --> view["Review panel<br/>per-hunk diff + undo"]
+  end
+
+  ctrl --> ctx["Context provider<br/>budget + reasons"]
+  ctx --> engine["finn_mcp<br/>Rust scanner + graph (stdio)"]
+  ctrl --> agent["FinnAgent<br/>SDK sessions + turns"]
+
+  agent -->|"inline agent spec, streamed events"| tf["TrueForge 0.185.0<br/>model + harness loop"]
+  tf -->|"authenticated MCP over loopback"| bridge["Editor MCP bridge<br/>bearer token, Host/Origin checks"]
+
+  bridge --> ws["Workspace service<br/>path + secret guards"]
+  ws -->|"propose_edit"| mem[("In-memory hunks")]
+  mem --> view
+  view -->|"accept hunk"| disk[("Source on disk")]
+  ws --> journal[("Undo journal")]
+
+  classDef accent fill:#0e7490,stroke:#22d3ee,color:#e0f2fe
+  classDef store fill:#1f2937,stroke:#4b5563,color:#e5e7eb
+  class ctrl,agent,bridge accent
+  class mem,disk,journal store
+```
+
+<details>
+<summary><strong>Request path, tool surface and invariants</strong></summary>
+
+**Turn sequence**
+
+1. `FinnController` asks the context provider for a bundle bounded by `finn.contextBudget`.
+2. `FinnAgent` registers a per-process editor MCP server in TrueForge and verifies the registration read-back.
+3. It creates or reuses one inline session and streams a turn, forwarding `text`, `status`, `tool`, `context` and `done` events.
+4. The model calls editor tools; proposals accumulate in memory.
+5. The panel renders hunks; acceptance applies exactly what was reviewed.
+
+**Editor MCP tools**
+
+| Tool | Purpose | Writes? |
+| --- | --- | --- |
+| `assemble_context` | Task-aware retrieval with budget and reasons | No |
+| `read_file` | Bounded read inside the workspace root | No |
+| `search_workspace` | Ignore-aware content search | No |
+| `propose_edit` | Full replacement proposal with original hash | No, memory only |
+| `run_command` | Bounded process, explicit human approval | Yes, by design |
+
+**Invariants enforced in code and tests**
+
+- Canonical path resolution denies traversal, symlink and hardlink escapes, `.git` internals, `.env` files and credential paths.
+- The MCP bridge binds `127.0.0.1` only, requires a per-process bearer token, rejects hostile `Host`/`Origin` and oversized bodies, and supports the Streamable HTTP transport with real SDK sessions.
+- A proposal whose file changed after staging is refused rather than overwriting your edits.
+- Cancellation and disposal never revert accepted human work.
+- Retry and fallback happen only before any tool invocation, so a tool is never replayed.
+
+</details>
+
+## Verified state
+
+These are the gates this revision actually passes. Every number was produced by running the command on the commit that introduced this file.
+
+| Gate | Command | Result |
+| --- | --- | --- |
+| TypeScript, strict | `npm run typecheck` | clean, no diagnostics |
+| Unit, protocol and security specs | `npx vitest run` | **89 passed**, 7 opt-in skipped |
+| Live model round trip | `npx vitest run tests/agent/live-model.test.ts` | **2 passed** against real TrueForge |
+| Rust workspace | `npm run test:rust` | passed |
+| Rust lint | `npm run lint:rust` | fmt + clippy clean |
+| Dependency audit | `npm audit --omit=dev` | no high or critical |
+| Extension bundle | `npm run package -- --target linux-x64` | VSIX built, 2.4 MB |
+
+<details>
+<summary><strong>What the live round trip actually proves</strong></summary>
+
+`tests/agent/live-model.test.ts` is skipped unless `FINN_TRUEFORGE_LIVE_URL` and `FINN_LIVE_MODEL` are both set, so it can never run by accident on a machine without a harness.
+
+When enabled, it drives a real model through TrueForge and asserts that:
+
+- text streams as `model.message.delta` events,
+- the model calls `read_file` and `propose_edit` over the authenticated MCP bridge,
+- the file on disk is byte-identical while the proposal is pending,
+- accepting a hunk writes the reviewed change,
+- `undo` restores the original bytes,
+- cancelling a second streaming turn rejects, leaves no proposals and changes no files.
+
+Provider responses are never fabricated in tests. Mocks exist only for HTTP contract tests.
+
+</details>
+
+## Forge-a-thon
+
+Finn was built for **Forge-a-thon at Techfest, IIT Bombay**, powered by **TrueFoundry TrueForge**. The competition fixes one repository, `pallets/flask` at tag `3.1.3`, and three tasks that must be demonstrated live.
+
+| Task | Requirement | Mechanical verification |
+| --- | --- | --- |
+| **A** inline edit | Treat `off` and `n` as false, case-insensitively, and document every false value | **passed**, `off/OFF/oFf/n/N` false, truthy cases intact |
+| **B** agent mode | Add a built-in `flask config` command with masked JSON, tests and docs, without naming files | **passed**, 4 files across `src/`, `tests/`, `docs/`, `flask --help` lists it |
+| **C** resilience | Bad provider must produce a clear error and leave the workspace clean | **passed**, error in 0.5 s, zero proposals, no file changes |
+
+Verification is independent of the agent: `scripts/prepare-demo.mjs` pins the checkout, `scripts/verify-demo.mjs` re-runs the acceptance probes and hashes the tree before and after. Full runbook in [docs/demo.md](docs/demo.md); evidence ledger in [docs/scorecard.md](docs/scorecard.md).
+
+<details>
+<summary><strong>Reproduce the fixed tasks</strong></summary>
+
+```bash
+node scripts/prepare-demo.mjs --dir "$HOME/finn-demo-take-1"
+node scripts/verify-demo.mjs --dir "$HOME/finn-demo-take-1" --task a \
+  --output "$HOME/finn-demo-take-1/a-result.json"
+node scripts/verify-demo.mjs --dir "$HOME/finn-demo-take-1" --task b \
+  --baseline "$HOME/finn-demo-take-1/b-before.json" \
+  --output "$HOME/finn-demo-take-1/b-result.json"
+```
+
+The harness never writes a task solution. It prepares, probes and hashes; the edits must come from Finn through TrueForge.
+
+</details>
 
 ## Run locally
 
-Requires Node **22.14+**, stable Rust, Git and VS Code **1.95+**. Everything runs on
-your machine. No accounts, hosted Finn backend or Marketplace publication needed.
+Requires Node **22.14+**, stable Rust, Git and VS Code **1.95+**. Everything runs on your machine; there is no hosted Finn backend.
 
 ```bash
 git clone https://github.com/atharhive/finn.git
@@ -30,108 +171,79 @@ npm run build
 npm run trueforge
 ```
 
-Open the URL printed by TrueForge, normally `http://localhost:8790`. Add a model
-provider in TrueForge's settings and copy a configured model reference. Finn never
-needs your provider API key.
+Open the URL TrueForge prints, normally `http://127.0.0.1:8790`, add a model provider in its settings and copy a configured model reference.
 
 <details>
-<summary>Load Finn in VS Code</summary>
+<summary><strong>Load Finn in VS Code</strong></summary>
 
 1. Open this repository in VS Code and trust the workspace.
 2. Press **F5** and choose **Finn Extension**.
 3. In the Extension Development Host, open the repository you want to work on.
-4. Set `finn.model` to the model reference from TrueForge. Set
-   `finn.fallbackModel` if you want a second configured model for failover.
-5. Open the Finn activity-bar view or run **Finn: Open Agent**.
+4. Set `finn.model` to the model reference from TrueForge, and optionally `finn.fallbackModel`.
+5. Open the Finn activity-bar view, or run **Finn: Open Agent**.
 6. For an inline edit, select code and press **Ctrl+I** / **Cmd+I**.
 
-TrueForge must run on the same machine as the extension host. The default
-`finn.trueforgeUrl` is `http://127.0.0.1:8790`.
-
-To install a package instead of using F5:
+TrueForge must run on the same machine as the extension host. To install a packaged build instead of pressing F5:
 
 ```bash
 npm run package -- --target linux-x64
 code --install-extension finn-agent-linux-x64-0.1.0.vsix
 ```
 
-Build on the target platform or use a matching CI artifact. The package includes a
-native Rust binary; a Linux package does not run on macOS or Windows. Use
-`darwin-arm64` or `win32-x64` when packaging on those platforms.
+The package bundles a native Rust binary, so build on the target platform: `linux-x64`, `darwin-arm64` or `win32-x64`.
 
 </details>
-
-## Working model
-
-- **Inline edits:** selection plus instruction, proposed changes in the editor.
-- **Agent mode:** one request, tool-driven file discovery and multi-file proposals.
-- **Context:** task-aware selection, explicit mentions, budget and selection reasons.
-- **Review:** per-hunk accept/reject, preview and stale-content protection.
-- **Undo:** restore a Finn-accepted change without silently overwriting later edits.
-- **Control:** streamed events, cancellation, actionable errors and configured fallback.
-
-Source proposals remain in memory until reviewed. A restart discards pending work.
-Already accepted human edits are not silently reverted by cancellation. Terminal
-commands require a separate explicit approval and run as your local user; they are
-not sandboxed. Read [SECURITY.md](SECURITY.md) before approving commands.
-
-## Verify
-
-```bash
-cargo build -p finn_mcp
-npm run check
-npm run test:rust
-npm run lint:rust
-npm run test:vscode
-npm audit --omit=dev
-```
-
-On Linux, the VS Code host test needs Xvfb plus GTK, NSS and audio runtime libraries.
-It starts a real extension development host, not a mocked `vscode` module.
-
-A real model turn through a running TrueForge is opt-in and skipped without both
-variables:
-
-```bash
-FINN_TRUEFORGE_LIVE_URL=http://127.0.0.1:8790 FINN_LIVE_MODEL=<provider>/<model> \
-  npx vitest run tests/agent/live-model.test.ts
-```
-
-It streams a real turn, requires actual editor MCP tool calls, checks that nothing
-reaches disk before a reviewed hunk is accepted, and exercises undo and mid-stream
-cancellation. It never fabricates provider responses.
 
 <details>
-<summary>Module boundaries and tests</summary>
+<summary><strong>Settings reference</strong></summary>
 
-- `src/agent`: TrueForge agent configuration, sessions, turns, events and recovery.
-- `src/workspace`: path guards, authenticated MCP tools, proposal/undo lifecycle.
-- `src/context`: task-aware context assembly using the Rust engine.
-- `src/extension`: native commands, editor selection, chat and review UI.
-- `crates`: scanner, dependency graph and context-selection foundation.
-- `mcp`: Rust repository-intelligence MCP service.
-- `tests`: behaviour, transport, security and host smoke tests.
-
-No source file is edited because a model requested it. Only an explicit hunk
-acceptance applies a source proposal. Approved terminal commands are a separate
-execution boundary and can write files; use a clean isolated clone for a demo.
+| Setting | Default | Meaning |
+| --- | --- | --- |
+| `finn.trueforgeUrl` | `http://127.0.0.1:8790` | Local TrueForge server |
+| `finn.model` | empty | Configured model reference, for example `provider/model` |
+| `finn.fallbackModel` | empty | Second configured reference for verified failover |
+| `finn.contextBudget` | `8000` | Conservative context token budget |
+| `finn.enginePath` | empty | Override the packaged `finn_mcp` binary |
 
 </details>
 
-## Forge-a-thon demo
+> [!TIP]
+> Run **Finn: Restart Connections** after changing the model, the harness URL or the workspace folder. It rebuilds the MCP bridge and verifies registration again.
 
-The official tasks use `pallets/flask` tag `3.1.3`. Preparation and independent
-verification instructions are in [docs/demo.md](docs/demo.md). No benchmark solution
-is embedded in Finn's production code. The demo must show actual TrueForge
-sessions, real diffs and real command outcomes. Model credentials and an honest
-recording remain the operator's responsibility.
+## Module map
 
-## Starting point and licensing
+<details>
+<summary><strong>Four modules, one contract file</strong></summary>
 
-Finn has fresh Git history, not a claim of from-scratch authorship. The reused
-repository-intelligence foundation, original copyright notices and exact upstream
-revision are declared in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Changes
-from that foundation add the TrueForge client, task-aware context bridge, secure
-editor tools and native review workflow, while removing the inherited synthetic
-agent-scheduling surface. New Finn code is MIT licensed; upstream and dependency
-licences remain in force.
+| Path | Responsibility |
+| --- | --- |
+| `src/agent` | TrueForge sessions, turns, event streaming, retry, fallback, cancellation |
+| `src/workspace` | Path guards, MCP bridge, proposals, per-hunk review, undo journal, approved commands |
+| `src/context` | Task-aware assembly over the Rust engine with budgets and reasons |
+| `src/extension` | Commands, selection flow, webview protocol, CSP, diff previews |
+| `crates` | Scanner, dependency graph and context-selection foundation |
+| `mcp` | Repository-intelligence MCP service used by the context provider |
+| `tests` | Behaviour, transport, security, host smoke and opt-in live specs |
+
+Contracts live in `src/contracts.ts` and are shared by all four modules, so the extension can be tested without a display and the agent without an editor.
+
+</details>
+
+## Credits
+
+Built at **Techfest, IIT Bombay** for the **Forge-a-thon**, on top of **TrueFoundry TrueForge**. Thanks to TrueFoundry for a genuinely local harness with real session, streaming and MCP semantics, and to the Techfest organisers for a problem statement that rewards engineering rather than stunts. Thanks also to the VS Code extension API maintainers and the Rust MCP ecosystem, whose primitives saved us from inventing a worse version of them.
+
+## Provenance
+
+<details>
+<summary><strong>Third-party code and licensing</strong></summary>
+
+Finn reuses the repository-intelligence, dependency-graph, context-selection and MCP foundation from [Ink](https://github.com/dev-Ninjaa/ink) at upstream commit `5c32267d8f92b0dc06998f6481a1ca5dca726d6d`. This repository starts a fresh Git history, which is not a claim of from-scratch authorship.
+
+The retained engine was rebranded and adapted for a TrueForge-native agent. Original copyright and MIT terms are preserved in `licenses/ink-MIT.txt`, and the exact scope of reuse is recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). New Finn code is MIT licensed; dependencies keep their own licences.
+
+</details>
+
+## Licence
+
+MIT for new Finn code. See [LICENSE](LICENSE) and the notices above.
