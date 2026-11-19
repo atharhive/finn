@@ -112,23 +112,11 @@ These are the gates this revision actually passes. Every number was produced by 
 | Dependency audit | `npm audit --omit=dev` | no high or critical |
 | Extension bundle | `npm run package -- --target linux-x64` | VSIX built, 2.4 MB |
 
-<details>
-<summary><strong>What the live round trip actually proves</strong></summary>
+### What the live round trip actually proves
 
-`tests/agent/live-model.test.ts` is skipped unless `FINN_TRUEFORGE_LIVE_URL` and `FINN_LIVE_MODEL` are both set, so it can never run by accident on a machine without a harness.
+`tests/agent/live-model.test.ts` is skipped unless `FINN_TRUEFORGE_LIVE_URL` and `FINN_LIVE_MODEL` are both set, so it can never run by accident on a machine without a harness. When enabled, it drives a real model through TrueForge and asserts that text streams as `model.message.delta` events, that the model calls `read_file` and `propose_edit` over the authenticated MCP bridge, that the file on disk stays byte-identical while the proposal is pending, that accepting a hunk writes the reviewed change, that `undo` restores the original bytes, and that cancelling a second streaming turn rejects with no proposals and no file changes.
 
-When enabled, it drives a real model through TrueForge and asserts that:
-
-- text streams as `model.message.delta` events,
-- the model calls `read_file` and `propose_edit` over the authenticated MCP bridge,
-- the file on disk is byte-identical while the proposal is pending,
-- accepting a hunk writes the reviewed change,
-- `undo` restores the original bytes,
-- cancelling a second streaming turn rejects, leaves no proposals and changes no files.
-
-Provider responses are never fabricated in tests. Mocks exist only for HTTP contract tests.
-
-</details>
+Provider responses are never fabricated. Mocks exist only in HTTP contract tests.
 
 ## Forge-a-thon
 
@@ -142,8 +130,7 @@ Finn was built for **Forge-a-thon at Techfest, IIT Bombay**, powered by **TrueFo
 
 Verification is independent of the agent: `scripts/prepare-demo.mjs` pins the checkout, `scripts/verify-demo.mjs` re-runs the acceptance probes and hashes the tree before and after. Full runbook in [docs/demo.md](docs/demo.md); evidence ledger in [docs/scorecard.md](docs/scorecard.md).
 
-<details>
-<summary><strong>Reproduce the fixed tasks</strong></summary>
+### Reproduce the fixed tasks
 
 ```bash
 node scripts/prepare-demo.mjs --dir "$HOME/finn-demo-take-1"
@@ -155,8 +142,6 @@ node scripts/verify-demo.mjs --dir "$HOME/finn-demo-take-1" --task b \
 ```
 
 The harness never writes a task solution. It prepares, probes and hashes; the edits must come from Finn through TrueForge.
-
-</details>
 
 ## Run locally
 
@@ -194,8 +179,7 @@ The package bundles a native Rust binary, so build on the target platform: `linu
 
 </details>
 
-<details>
-<summary><strong>Settings reference</strong></summary>
+### Settings
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
@@ -205,15 +189,12 @@ The package bundles a native Rust binary, so build on the target platform: `linu
 | `finn.contextBudget` | `8000` | Conservative context token budget |
 | `finn.enginePath` | empty | Override the packaged `finn_mcp` binary |
 
-</details>
-
 > [!TIP]
 > Run **Finn: Restart Connections** after changing the model, the harness URL or the workspace folder. It rebuilds the MCP bridge and verifies registration again.
 
 ## Module map
 
-<details>
-<summary><strong>Four modules, one contract file</strong></summary>
+### Module map
 
 | Path | Responsibility |
 | --- | --- |
@@ -226,8 +207,6 @@ The package bundles a native Rust binary, so build on the target platform: `linu
 | `tests` | Behaviour, transport, security, host smoke and opt-in live specs |
 
 Contracts live in `src/contracts.ts` and are shared by all four modules, so the extension can be tested without a display and the agent without an editor.
-
-</details>
 
 ## Credits
 
