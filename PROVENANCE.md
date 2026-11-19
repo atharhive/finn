@@ -1,12 +1,20 @@
-# Provenance and acknowledgements
+# Provenance: my own engine, rebuilt
 
-## Where the engine came from
+## The short version
 
-Finn's repository-intelligence engine began life as **Ink**, our previous project: a Rust scanner, dependency graph and context selector that answered one question well, which files matter for this task. Ink won an IBM hackathon, which came with $1,600 of IBM TechXchange tickets. That project is why Finn treats retrieval as a subsystem instead of a prompt.
+Finn's repository-intelligence engine is **Ink**, my earlier project. I wrote it, I won an IBM hackathon with it, and I am reusing it here on purpose rather than pretending this repository appeared from nowhere.
 
-Finn reuses that foundation from [Ink](https://github.com/dev-Ninjaa/ink) at upstream commit `5c32267d8f92b0dc06998f6481a1ca5dca726d6d`, specifically the scanner, dependency graph, context-selection and MCP layers. The retained engine was rebranded and adapted for a TrueForge-native agent. This repository starts a fresh Git history, which is not a claim of from-scratch authorship.
+## The story
 
-## What Finn changed around it
+Ink started with a question that kept slowing me down: in a repository nobody has read end to end, which files actually matter for this task? I answered it in Rust, with a scanner, a dependency graph and a context selector. It worked well enough to win an **IBM hackathon**, which came with **$1,600 of IBM TechXchange tickets**.
+
+It also taught me the lesson that made Finn necessary. Retrieval is not an agent. Ink could point at the right file, but the loop around it was scripted, so it always looked busy without ever earning enough trust to change code on its own. The engine was good. The harness around it was theatre.
+
+When Forge-a-thon asked for a coding agent on top of TrueFoundry TrueForge, I had two options: write another retrieval engine, or take the one I already had and fix what was actually broken. I took my own code. Rewriting solved work is vanity, and it would have burned the time I needed for the review boundary.
+
+So the scanner, graph, context-selection and MCP layers come from [Ink](https://github.com/dev-Ninjaa/ink) at commit `5c32267d8f92b0dc06998f6481a1ca5dca726d6d`, rebranded and adapted. Everything around them is new.
+
+## What I kept, and what I rewrote
 
 | Concern | Ink | Finn |
 | --- | --- | --- |
@@ -16,10 +24,12 @@ Finn reuses that foundation from [Ink](https://github.com/dev-Ninjaa/ink) at ups
 | Context | Retrieval results | Budgeted bundles with per-file reasons and explicit `@file` / `@symbol` mentions |
 | Interface | Panel front end | Native commands, `Ctrl+I` inline edits, diff previews, streamed tool events, CSP-hardened webview |
 
-The synthetic agent-scheduling surface was removed rather than wrapped, because a harness that only looks like it is running is worse than no harness.
+I deleted the synthetic agent scheduling instead of wrapping it, because a harness that only looks like it is running is worse than no harness at all.
 
-## Licensing
+## What this means for the licence
 
-New Finn code is MIT licensed under [LICENSE](LICENSE). Ink's original copyright and MIT terms are preserved in `licenses/ink-MIT.txt`, and inherited component licence files remain in place. Dependencies keep their own licences.
+This repository starts a fresh Git history. That is a decision about clean commits, not a claim that the engine is new work, and the README says so.
 
-If you reuse Finn, keep this file and the licence terms with it. Attribution is the whole reason the engine is available to you.
+Ink's original copyright and MIT terms travel with the code in `licenses/ink-MIT.txt`, and inherited component licence files stay where they were. New Finn code is MIT licensed under [LICENSE](LICENSE); dependencies keep their own terms.
+
+If you reuse Finn, keep this file with it. The engine is available because the person who wrote it put a licence on it, and that is a courtesy worth passing on.

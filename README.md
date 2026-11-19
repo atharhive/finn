@@ -212,11 +212,11 @@ Built at **Techfest, IIT Bombay** for the **Forge-a-thon**, on top of **TrueFoun
 
 ## From Ink to Finn
 
-Finn's engine was not invented here in a vacuum. It comes from **Ink**, our previous project, and that history is the honest reason this repo exists.
+Ink is my earlier project, and Finn exists because of what it taught me.
 
-Ink was a Rust repository-intelligence engine: it scanned a codebase, built a dependency graph and decided which files actually mattered for a task. It won an **IBM hackathon**, which paid for **$1,600 of IBM TechXchange tickets**. It also taught the more useful lesson: retrieval alone does not make a coding agent. Ink could point at the right file, but its agent loop was scripted, so it always looked busy without ever being trusted with a real edit.
+I wrote Ink to answer a question that kept slowing me down: in a repository nobody has read end to end, which files actually matter for this task? It grew into a Rust engine that scans a codebase, builds a dependency graph and selects context. It won an **IBM hackathon**, and that win paid for **$1,600 of IBM TechXchange tickets**. It also taught me the harder lesson, the one that made this repository necessary: retrieval is not an agent. Ink could point at the right file, but the loop around it was scripted, so it always looked busy without ever earning enough trust to change code on its own.
 
-Finn keeps the engine and rebuilds everything around it.
+When Forge-a-thon asked for a coding agent on top of TrueForge, I did not want to throw that engine away. The scanner and graph are mine, they work, and rewriting them would have been vanity. So I kept my own work and rebuilt the parts I had gotten wrong around it.
 
 | Concern | Ink | Finn |
 | --- | --- | --- |
@@ -226,14 +226,14 @@ Finn keeps the engine and rebuilds everything around it.
 | Context | Retrieval results | Budgeted bundles with per-file reasons and explicit `@file` / `@symbol` mentions |
 | Interface | Panel front end | Native commands, `Ctrl+I` inline edits, diff previews, streamed tool events, CSP-hardened webview |
 
-The synthetic agent-scheduling surface was deleted rather than wrapped, because a harness that only looks like it is running is worse than no harness. Credit where it is due: the scanner and graph are still the best part of the retrieval story, and they started there.
+I deleted the synthetic scheduling rather than wrapping it, because a harness that only looks like it is running is worse than no harness. What I kept is the part that was never the problem: the scanning and graph work, which now feeds a real agent instead of dressing a fake one. Reusing my own engine was not a shortcut. It was the difference between spending this project on retrieval plumbing I had already solved, and spending it on the review boundary that actually decides whether a coding agent is safe to leave alone with your repository.
 
 <details>
 <summary><strong>Attribution and licence terms</strong></summary>
 
-The reused engine comes from [Ink](https://github.com/dev-Ninjaa/ink) at commit `5c32267d8f92b0dc06998f6481a1ca5dca726d6d`. Finn starts a fresh Git history, which is not a claim of from-scratch authorship.
+The engine comes from my earlier project [Ink](https://github.com/dev-Ninjaa/ink) at commit `5c32267d8f92b0dc06998f6481a1ca5dca726d6d`, reused under its MIT licence. New Finn code is MIT licensed too, and dependencies keep their own terms.
 
-Ink's copyright and MIT terms are preserved in `licenses/ink-MIT.txt`, and the scope of reuse is recorded in [PROVENANCE.md](PROVENANCE.md). New Finn code is MIT licensed; dependencies keep their own licences.
+The full story, what I kept and what I rewrote, is in [PROVENANCE.md](PROVENANCE.md).
 
 </details>
 
