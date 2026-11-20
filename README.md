@@ -9,7 +9,7 @@ Task-aware context from a Rust engine. Every model edit lands as a proposal you 
   <a href="#demo">Demo</a> ·
   <a href="docs/architecture.md">Architecture</a> ·
   <a href="docs/scorecard.md">Evidence scorecard</a> ·
-  <a href="docs/submission/finn-writeup.pdf">Write-up PDF</a> ·
+  <a href="docs/Finn-Writeup.pdf">Write-up PDF</a> ·
   <a href="docs/demo.md">Runbook</a> ·
   <a href="SECURITY.md">Security</a>
 </p>
@@ -45,7 +45,7 @@ Task-aware context from a Rust engine. Every model edit lands as a proposal you 
 
 A 3 minute 53 second walkthrough of all three Forge-a-thon tasks, recorded against `pallets/flask` 3.1.3 on a real extension host: **[watch on YouTube](https://youtu.be/s8OKXVHf0po)**.
 
-It shows Task A as a reviewed inline edit, Task B where the agent finds four files without being given a filename, Task C failing cleanly on an unreachable provider, and a mid-stream cancellation. Every claim it makes, with timestamps and the two things it deliberately does not show, is listed in the **[evidence scorecard](docs/scorecard.md)**. The one-page submission write-up is [here](docs/submission/finn-writeup.pdf).
+It shows Task A as a reviewed inline edit, Task B where the agent finds four files without being given a filename, Task C failing cleanly on an unreachable provider, and a mid-stream cancellation. Every claim it makes, with timestamps and the two things it deliberately does not show, is listed in the **[evidence scorecard](docs/scorecard.md)**. The submission write-up is [here](docs/Finn-Writeup.pdf).
 
 ## Why this exists
 

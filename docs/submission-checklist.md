@@ -41,7 +41,7 @@ The official Round 1 deadline is **20 November 2026, 23:59 IST** (problem statem
 
 Use `examples/write-up.html` as a **draft source**, not a completed submission. Open in a browser and print A4 to PDF, background graphics enabled, browser headers/footers off. Its explicit three-page layout is designed for 3 pages; verify the exported PDF page count and legibility after replacing placeholders. Do not submit HTML instead of PDF.
 
-- [x] Eight headings, in the required order, in `docs/submission/finn-writeup.pdf`.
+- [x] Eight headings, in the required order, in `docs/Finn-Writeup.pdf`.
 - [x] Member names, roles and team ID in the PDF. College and emails left off deliberately; add them only if the portal asks.
 - [x] Upstream commit, licence and the delta are stated in section 2.
 - [x] Client to TrueForge to MCP architecture and the editor approval boundary are in section 3.
