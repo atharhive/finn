@@ -3,11 +3,14 @@ import { relative, isAbsolute, resolve, sep } from 'node:path';
 import { applyPatch } from 'diff';
 import { isDeniedName, isHardlink } from '../security.js';
 
-export function resolveSettings(values: Record<string, unknown>): { ready: boolean; status: string; baseUrl: string; model: string; fallbackModel?: string; contextBudget: number; binaryPath?: string } {
+export function resolveSettings(values: Record<string, unknown>): { ready: boolean; status: string; baseUrl: string; model: string; fallbackModel?: string; contextBudget: number; requestTimeoutMs: number; binaryPath?: string } {
   const model = typeof values.model === 'string' ? values.model.trim() : '';
   const baseUrl = typeof values.trueforgeUrl === 'string' && values.trueforgeUrl.trim() ? values.trueforgeUrl.trim() : 'http://127.0.0.1:8790';
   const contextBudget = Number.isSafeInteger(values.contextBudget) && Number(values.contextBudget) >= 512 && Number(values.contextBudget) <= 32768 ? Number(values.contextBudget) : 8000;
-  const result = { model, baseUrl, contextBudget, fallbackModel: typeof values.fallbackModel === 'string' ? values.fallbackModel.trim() || undefined : undefined, binaryPath: typeof values.enginePath === 'string' ? values.enginePath.trim() || undefined : undefined };
+  // Multi-file agent turns legitimately run for minutes. A short cap turns honest work into a mid-turn failure.
+  const turnSeconds = Number.isSafeInteger(values.turnTimeoutSeconds) && Number(values.turnTimeoutSeconds) >= 60 && Number(values.turnTimeoutSeconds) <= 3600 ? Number(values.turnTimeoutSeconds) : 900;
+  const requestTimeoutMs = turnSeconds * 1000;
+  const result = { model, baseUrl, contextBudget, requestTimeoutMs, fallbackModel: typeof values.fallbackModel === 'string' ? values.fallbackModel.trim() || undefined : undefined, binaryPath: typeof values.enginePath === 'string' ? values.enginePath.trim() || undefined : undefined };
   try {
     const url = new URL(baseUrl);
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) throw new Error('Invalid URL');

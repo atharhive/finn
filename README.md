@@ -187,6 +187,7 @@ The package bundles a native Rust binary, so build on the target platform: `linu
 | `finn.model` | empty | Configured model reference, for example `provider/model` |
 | `finn.fallbackModel` | empty | Second configured reference for verified failover |
 | `finn.contextBudget` | `8000` | Conservative context token budget |
+| `finn.turnTimeoutSeconds` | `900` | Time allowed for one agent turn |
 | `finn.enginePath` | empty | Override the packaged `finn_mcp` binary |
 
 > [!TIP]

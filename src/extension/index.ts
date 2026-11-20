@@ -21,6 +21,7 @@ export function activate(extension: vscode.ExtensionContext): void {
     return resolveSettings({
       trueforgeUrl: config.get('trueforgeUrl', 'http://127.0.0.1:8790'), model: config.get('model', ''),
       fallbackModel: config.get('fallbackModel', ''), contextBudget: config.get('contextBudget', 8000),
+      turnTimeoutSeconds: config.get('turnTimeoutSeconds', 900),
       enginePath: config.get('enginePath', ''),
     });
   };
@@ -70,7 +71,7 @@ export function activate(extension: vscode.ExtensionContext): void {
           workspace = await createWorkspace({root:root.uri.fsPath, onChange: () => controller.refreshProposals(), approveCommand, contextProvider: assemble});
           const mcp = await workspace.startMcpServer();
           signal.throwIfAborted();
-          const agent = new FinnAgent({baseUrl:config.baseUrl, model:config.model, fallbackModel:config.fallbackModel, workspaceRoot:root.uri.fsPath, mcpUrl:mcp.url, mcpToken:mcp.token, requestTimeoutMs:300000,maxRetries:2});
+          const agent = new FinnAgent({baseUrl:config.baseUrl, model:config.model, fallbackModel:config.fallbackModel, workspaceRoot:root.uri.fsPath, mcpUrl:mcp.url, mcpToken:mcp.token, requestTimeoutMs:config.requestTimeoutMs,maxRetries:2});
           const service = workspace;
           return { workspace:service, agent, assemble,
             dispose: async () => { try { await agent.dispose(); } finally { try { await service.dispose(); } finally { await context.dispose(); } } },

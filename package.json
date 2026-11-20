@@ -118,6 +118,13 @@
           "maximum": 32768,
           "description": "Conservative estimated token budget for repository context."
         },
+        "finn.turnTimeoutSeconds": {
+          "type": "number",
+          "default": 900,
+          "minimum": 60,
+          "maximum": 3600,
+          "description": "Time allowed for one agent turn. Multi-file work needs minutes, so raise this instead of accepting a mid-turn timeout."
+        },
         "finn.enginePath": {
           "type": "string",
           "default": "",

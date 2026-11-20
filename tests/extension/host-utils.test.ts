@@ -12,6 +12,9 @@ it('validates explicit TrueForge configuration and provides an actionable no-mod
   expect(resolveSettings({model:'catalog/model', trueforgeUrl:'http://127.0.0.1:3000'})).toMatchObject({ready:true, model:'catalog/model', baseUrl:'http://127.0.0.1:3000', contextBudget:8000});
   for(const url of ['file:///etc/passwd','https://user:secret@host','https://host/?key=secret']) expect(resolveSettings({model:'m',trueforgeUrl:url}).ready).toBe(false);
   expect(resolveSettings({model:'m', contextBudget:NaN}).contextBudget).toBe(8000);
+  expect(resolveSettings({model:'m'}).requestTimeoutMs).toBe(900000);
+  expect(resolveSettings({model:'m', turnTimeoutSeconds:1200}).requestTimeoutMs).toBe(1200000);
+  expect(resolveSettings({model:'m', turnTimeoutSeconds:5}).requestTimeoutMs).toBe(900000);
 });
 
 it('blocks selection from secrets, symlinks and files outside the canonical workspace', async () => {
