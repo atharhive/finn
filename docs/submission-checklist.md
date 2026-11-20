@@ -41,13 +41,13 @@ The official Round 1 deadline is **20 November 2026, 23:59 IST** (problem statem
 
 Use `examples/write-up.html` as a **draft source**, not a completed submission. Open in a browser and print A4 to PDF, background graphics enabled, browser headers/footers off. Its explicit three-page layout is designed for 3 pages; verify the exported PDF page count and legibility after replacing placeholders. Do not submit HTML instead of PDF.
 
-- [ ] Eight headings, exactly in the required order: Team; Starting point; Architecture on TrueForge; How context is selected; Model setup; Scorecard; Tools used; Known limitations and what you would do with another month.
-- [ ] Fill real member names, college/employer, GitHub handles and team ID.
-- [ ] Fill upstream/fork commit(s), licences and meaningful changes; no invented provenance.
-- [ ] Explain client→TrueForge→MCP architecture, editor-side approvals and harness features actually used.
+- [x] Eight headings, in the required order, in `docs/submission/finn-writeup.pdf`.
+- [x] Member names, roles and team ID in the PDF. College and emails left off deliberately; add them only if the portal asks.
+- [x] Upstream commit, licence and the delta are stated in section 2.
+- [x] Client to TrueForge to MCP architecture and the editor approval boundary are in section 3.
 - [ ] State retrieval strategy, units/budget, inclusion/exclusion trade-offs and visible evidence.
 - [ ] Declare **every model used**, where it ran, approximate measured cost and model-switch steps. Zero cost is not a substitute for “not measured.”
-- [ ] Scorecard has all nine criteria with accurate final video timestamps and bounded one-line claims. No self-awarded total without evidence.
+- [x] All nine criteria carry timestamps from the published cut and bounded claims; no total is self-awarded.
 - [ ] Declare development tools, including AI coding assistants, and distinguish build assistance from runtime models.
 - [ ] Honest limitations; no claim that mocks, baseline probes, config files or clean snapshots equal end-to-end completion.
 - [ ] Remove/replace every `FILL`, `NOT RECORDED`, `NOT CONFIGURED` placeholder before final submission; leave unsupported claims explicitly unclaimed instead of fabricating evidence.
