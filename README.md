@@ -6,16 +6,21 @@
 Task-aware context from a Rust engine. Every model edit lands as a proposal you accept hunk by hunk.</p>
 
 <p align="center">
+  <a href="#demo">Demo</a> ·
+  <a href="docs/architecture.md">Architecture</a> ·
+  <a href="docs/scorecard.md">Evidence scorecard</a> ·
+  <a href="docs/demo.md">Runbook</a> ·
+  <a href="SECURITY.md">Security</a>
+</p>
+
+<p align="center">
   <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-0ea5a4?style=flat-square" />
   <img alt="Tests: 89 passing" src="https://img.shields.io/badge/tests-89%20passing-2ea043?style=flat-square" />
   <img alt="Pre-release" src="https://img.shields.io/badge/status-pre--release-f59e0b?style=flat-square" />
   <img alt="Node 22.14+" src="https://img.shields.io/badge/node-%E2%89%A522.14-339933?style=flat-square&logo=nodedotjs&logoColor=white" />
   <img alt="VS Code 1.95+" src="https://img.shields.io/badge/VS%20Code-%5E1.95-007acc?style=flat-square&logo=visualstudiocode&logoColor=white" />
   <img alt="TrueForge 0.185.0" src="https://img.shields.io/badge/TrueForge-0.185.0-6366f1?style=flat-square" />
-</p>
-
-<p align="center">
-  <a href="https://youtu.be/s8OKXVHf0po"><img alt="Watch the demo" src="https://img.shields.io/badge/%E2%96%B6%20Watch%20the%20demo-3%3A53-FF0000?style=for-the-badge&logo=youtube&logoColor=white" /></a>
+  <a href="https://youtu.be/s8OKXVHf0po"><img alt="Demo video: 3 min 53 s" src="https://img.shields.io/badge/demo-3%3A53-FF0000?style=flat-square&logo=youtube&logoColor=white" /></a>
 </p>
 
 <p align="center">
@@ -34,6 +39,12 @@ Task-aware context from a Rust engine. Every model edit lands as a proposal you 
 
 > [!WARNING]
 > Approved terminal commands run as your local user and are **not** sandboxed. Review every command and use a disposable clone for untrusted work. Details in [SECURITY.md](SECURITY.md).
+
+## Demo
+
+A 3 minute 53 second walkthrough of all three Forge-a-thon tasks, recorded against `pallets/flask` 3.1.3 on a real extension host: **[watch on YouTube](https://youtu.be/s8OKXVHf0po)**.
+
+It shows Task A as a reviewed inline edit, Task B where the agent finds four files without being given a filename, Task C failing cleanly on an unreachable provider, and a mid-stream cancellation. Every claim it makes, with timestamps and the two things it deliberately does not show, is listed in the **[evidence scorecard](docs/scorecard.md)**.
 
 ## Why this exists
 
