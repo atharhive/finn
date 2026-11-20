@@ -15,6 +15,10 @@ Task-aware context from a Rust engine. Every model edit lands as a proposal you 
 </p>
 
 <p align="center">
+  <a href="https://youtu.be/s8OKXVHf0po"><img alt="Watch the demo" src="https://img.shields.io/badge/%E2%96%B6%20Watch%20the%20demo-3%3A53-FF0000?style=for-the-badge&logo=youtube&logoColor=white" /></a>
+</p>
+
+<p align="center">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square&logo=typescript&logoColor=white" />
   <img alt="Rust" src="https://img.shields.io/badge/Rust-stable-000000?style=flat-square&logo=rust&logoColor=white" />
   <img alt="Model Context Protocol" src="https://img.shields.io/badge/MCP-streamable%20HTTP-6b7280?style=flat-square" />
@@ -128,7 +132,7 @@ Finn was built for **Forge-a-thon at Techfest, IIT Bombay**, powered by **TrueFo
 | **B** agent mode | Add a built-in `flask config` command with masked JSON, tests and docs, without naming files | **passed**, 4 files across `src/`, `tests/`, `docs/`, `flask --help` lists it |
 | **C** resilience | Bad provider must produce a clear error and leave the workspace clean | **passed**, error in 0.5 s, zero proposals, no file changes |
 
-Verification is independent of the agent: `scripts/prepare-demo.mjs` pins the checkout, `scripts/verify-demo.mjs` re-runs the acceptance probes and hashes the tree before and after. Full runbook in [docs/demo.md](docs/demo.md); evidence ledger in [docs/scorecard.md](docs/scorecard.md).
+Verification is independent of the agent: `scripts/prepare-demo.mjs` pins the checkout, `scripts/verify-demo.mjs` re-runs the acceptance probes and hashes the tree before and after. The recorded walkthrough is on YouTube: [Finn, review-first coding agent](https://youtu.be/s8OKXVHf0po) (3 min 53 s). Full runbook in [docs/demo.md](docs/demo.md); evidence ledger in [docs/scorecard.md](docs/scorecard.md).
 
 ### Reproduce the fixed tasks
 

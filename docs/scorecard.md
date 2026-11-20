@@ -2,7 +2,7 @@
 
 Official criteria: Forge-a-thon statement pp. 7–9. Judges choose discrete anchors; when between anchors the lower applies.
 
-**Recorded run:** `finn-demo-vo.mp4`, 3 min 53 s, with narration, recorded 20 November 2026 against `pallets/flask` `3.1.3` (`22d924701a6ae2e4cd01e9a15bbaf3946094af65`), TrueForge 0.185.0, model reference `local-gateway/deepseek-v41-flash` served through a loopback OpenAI-compatible gateway. Timestamps are from the final cut, not a plan.
+**Recorded run:** `finn-demo-vo.mp4`, 3 min 53 s, with narration, published at <https://youtu.be/s8OKXVHf0po>, recorded 20 November 2026 against `pallets/flask` `3.1.3` (`22d924701a6ae2e4cd01e9a15bbaf3946094af65`), TrueForge 0.185.0, model reference `local-gateway/deepseek-v41-flash` served through a loopback OpenAI-compatible gateway. Timestamps are from the final cut, not a plan.
 
 | Criterion | Max | What the recording shows | Timestamp | Claimed anchor |
 |---|---:|---|---|---|
@@ -25,7 +25,7 @@ Official criteria: Forge-a-thon statement pp. 7–9. Judges choose discrete anch
 
 ## Evidence manifest
 
-- Recording: `finn-demo-vo.mp4`, 233 s, 7.8 MB, H.264 1280x800 with AAC narration.
+- Recording: <https://youtu.be/s8OKXVHf0po>, 233 s, H.264 1280x800 with AAC narration.
 - Flask full SHA: `22d924701a6ae2e4cd01e9a15bbaf3946094af65`.
 - Finn revision on screen: `8123ba2`.
 - TrueForge: 0.185.0, local standalone on `127.0.0.1:8790`.

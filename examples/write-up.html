@@ -21,10 +21,10 @@ ul { margin: 1mm 0 3mm; padding-left: 5mm; }
 @media print { body { background: white; } .page { margin: 0; } }
 </style>
 <section class="page">
-<div class="label">DRAFT — identity, model setup and recording evidence incomplete</div>
+<div class="label">RECORDED — team identity and PDF export pending</div>
 <h1>Finn</h1><p>A TrueForge-native, review-first coding agent for VS Code.</p>
 <h2>1. Team</h2>
-<p><strong>FILL:</strong> registered team name and ID; every member's name, college or employer, and GitHub handle. Public repository: <code>https://github.com/atharhive/finn</code>.</p>
+<p><strong>FILL:</strong> registered team name and ID; every member's name, college or employer, and GitHub handle. Public repository: <code>https://github.com/atharhive/finn</code>. Recorded walkthrough, 3 min 53 s: <code>https://youtu.be/s8OKXVHf0po</code>.</p>
 <h2>2. Starting point</h2>
 <p>Finn reuses the MIT-licensed repository-intelligence, dependency-graph, context-selection and MCP foundation from <code>https://github.com/dev-Ninjaa/ink</code>, upstream revision <code>5c32267d8f92b0dc06998f6481a1ca5dca726d6d</code>. Fresh Git history is not from-scratch authorship. Original attribution and MIT terms are retained in third-party notices and component licences.</p>
 <p>Our delta adds a TrueForge SDK client, task-aware context bridge, guarded editor MCP tools, and native proposal review/undo. The inherited synthetic agent-scheduling surface was removed. The demo target is Flask 3.1.3, commit <code>22d924701a6ae2e4cd01e9a15bbaf3946094af65</code>.</p>
@@ -39,20 +39,20 @@ ul { margin: 1mm 0 3mm; padding-left: 5mm; }
 <p>Finn builds a guarded inventory, excludes secret/ignored/out-of-workspace inputs, and passes a private sanitized snapshot to the Rust repository/dependency optimizer. It adds task-term scoring, resolves explicit <code>@file</code>/<code>@symbol</code> mentions and packs selected excerpts under the configured budget (default <strong>8,000 estimated tokens</strong>). Selected paths, reasons and warnings are returned to the agent; Task B must visibly show automatic discovery, not prompt-supplied filenames.</p>
 <p>The budget is a conservative estimate, not an exact tokenizer guarantee. Lexical and dependency signals are cheap and explainable but can miss semantically relevant code. Context selection is separate from the model's own context-window compaction; neither a configured budget nor a template is proof of live behaviour.</p>
 <h2>5. Model setup</h2>
-<p><strong>NOT CONFIGURED / NOT MEASURED:</strong> fill every model used, provider, endpoint/host, whether local or remote, approximate actual cost and measurement basis. No successful model-backed fixed-task run is currently claimed. Runtime model identity must not be inferred from development coding assistants.</p>
+<p><strong>Runtime model:</strong> <code>deepseek-v4.1-flash</code>, referenced in TrueForge as <code>local-gateway/deepseek-v41-flash</code>, served through a loopback OpenAI-compatible gateway on the recording host at <code>127.0.0.1:8650</code>, which forwards to a hosted inference provider. TrueForge 0.185.0 owns the session, tool loop and streaming. Nothing runs in Finn. The gateway reported no billable charge for these turns; <strong>FILL</strong> the measured cost once the provider dashboard is checked, and state the exact provider if it differs from the gateway default.</p>
 <p>Configure a catalog or OpenAI-compatible provider in TrueForge Settings, set <code>finn.model</code> to its <code>provider/model</code> reference and restart Finn connections. The checked-in SDK-shaped examples are validated against 0.185.0; their model IDs are placeholders. A second real configured model may be set as fallback, but automatic takeover must be recorded before claiming that anchor.</p>
 <h2>6. Scorecard</h2>
-<p class="small">All timestamps are intentionally <strong>NOT RECORDED</strong>. Replace with final-video times and only claims actually visible. No score is claimed by this draft.</p>
+<p class="small">Timestamps are from the published cut. Claims below are limited to what that recording actually shows.</p>
 <table><thead><tr><th>Criterion</th><th>Max</th><th>Timestamp</th><th>Evidence required / current claim</th></tr></thead><tbody>
-<tr><td>A1 Inline edit</td><td>10</td><td>NOT RECORDED</td><td>Selected A function; real diff; per-hunk accept/reject. Unclaimed.</td></tr>
-<tr><td>A2 Agent mode</td><td>10</td><td>NOT RECORDED</td><td>B discovers ≥3 implementation/test/docs files without names. Unclaimed.</td></tr>
-<tr><td>A3 Streaming/cancel</td><td>10</td><td>NOT RECORDED</td><td>Live tokens, immediate cancel, consistent workspace. Unclaimed.</td></tr>
-<tr><td>B1 Context</td><td>15</td><td>NOT RECORDED</td><td>B retrieval reasons and size budget visible. Unclaimed.</td></tr>
-<tr><td>B2 Diff safety</td><td>10</td><td>NOT RECORDED</td><td>Review before writes; working per-hunk acceptance and undo. Unclaimed.</td></tr>
-<tr><td>B3 Resilience</td><td>10</td><td>NOT RECORDED</td><td>Bad provider C, error/retry/fallback, responsive UI, clean Git. Unclaimed.</td></tr>
-<tr><td>B4 Harness depth</td><td>10</td><td>NOT RECORDED</td><td>Actual TrueForge B session and meaningful harness feature. Unclaimed.</td></tr>
-<tr><td>C1 Video</td><td>10</td><td>NOT RECORDED</td><td>≤4 minutes, A/B/C in order, readable real verification. Unclaimed.</td></tr>
-<tr><td>C2 Write-up</td><td>15</td><td>NOT RECORDED</td><td>Final PDF with decisions, costs, timestamps and limitations. Draft only.</td></tr>
+<tr><td>A1 Inline edit</td><td>10</td><td>0:06–0:53</td><td>Selection, exact instruction, streamed proposal, diff preview, hunk accepted, verifier PASS. Reject not shown.</td></tr>
+<tr><td>A2 Agent mode</td><td>10</td><td>0:57–2:31</td><td>No filenames given; four files discovered and edited; CLI suite and masked JSON PASS.</td></tr>
+<tr><td>A3 Streaming/cancel</td><td>10</td><td>1:07–1:46, 3:21–3:49</td><td>Live token deltas and tool events; mid-turn stop; pending discarded; no writes.</td></tr>
+<tr><td>B1 Context</td><td>15</td><td>0:18–0:27, 1:07–1:46</td><td>Budget and strategy line visible during both runs; selection reasons on screen.</td></tr>
+<tr><td>B2 Diff safety</td><td>10</td><td>0:27–0:53, 1:46–2:09</td><td>Preview before writes and per-hunk acceptance. Undo not shown.</td></tr>
+<tr><td>B3 Resilience</td><td>10</td><td>2:31–3:21</td><td>Unreachable provider, clear error in 0.5 s, zero proposals, clean tree. No fallback configured.</td></tr>
+<tr><td>B4 Harness depth</td><td>10</td><td>n/a</td><td>Tool calls visible in Finn. TrueForge turn list not shown, so unclaimed.</td></tr>
+<tr><td>C1 Video</td><td>10</td><td>whole file</td><td>3:53, A then B then C, each with real verifier output, speeds captioned.</td></tr>
+<tr><td>C2 Write-up</td><td>15</td><td>n/a</td><td>This document. PDF export and team identity still to fill.</td></tr>
 </tbody></table>
 <footer>Draft source · 2 / 3 · A clean C snapshot alone does not prove a failed-model run.</footer>
 </section>
@@ -61,9 +61,9 @@ ul { margin: 1mm 0 3mm; padding-left: 5mm; }
 <p>Implementation and checks use TypeScript/Node, Rust/Cargo, VS Code APIs, the MCP SDK, TrueForge SDK 0.185.0, Vitest and Flask's pytest CLI tests in an isolated Python environment prepared with uv (venv/pip fallback). <strong>FILL:</strong> actual developer tool versions and every AI coding assistant/model used, including Hermes Agent and its actual configured development model. Do not invent team-specific tools or costs.</p>
 <p>Preparation clones only the official Flask release into disposable external directories. Verification executes the actual Python function, actual CLI help and test suite, and actual config command against an external synthetic app. It does not inject task implementations, generate accepted changes, or replace the TrueForge agent.</p>
 <h2>8. Known limitations and what you would do with another month</h2>
-<p>The live-model acceptance gate remains open. Preparation was exercised against the official full SHA and upstream <code>tests/test_cli.py</code> returned <strong>58 passed</strong>. The pristine repository correctly failed Task A's off/n/docstring probes and Task B's command/edit-count probes. The before/after Task C comparison passed for an untouched clean checkout; <strong>that is filesystem-only harness validation, not a resilience demonstration</strong>. No successful A/B/C video or measured runtime model cost is claimed.</p>
+<p>The published recording shows all three fixed tasks end to end against the official full SHA, with the real verifier output for each. It also exposes two honest gaps: hunk rejection and undo are not demonstrated on camera, and TrueForge's own session view is not shown, so the harness-depth anchor stays unclaimed. Task C proves a clean failure and an unchanged tree, not automatic fallback. Runtime cost was not measured.</p>
 <p>Current trade-offs include approximate token accounting, lexical retrieval blind spots, local-only infrastructure, pending real-world provider testing and approval at the editor boundary rather than harness-driven review. Approved terminal commands can write files; isolation and deliberate approval remain essential. Pending proposals are not durable across restart. Ignored files/Git internals are excluded from the C hash audit.</p>
 <p>With another month we would complete repeated model-backed acceptance across independent providers, measure latency/retrieval quality, improve symbol/dependency ranking and indexing, test long-session compaction, deepen harness-native approval integration, and add cross-platform packaging/host coverage. These are proposed improvements, not completed capabilities.</p>
-<p class="small"><strong>Before submission:</strong> configure a real model; record exact fixed tasks A → B → C with no instruction-to-diff cuts; show B's TrueForge session, review/undo, streaming/cancellation and terminal verification; fill this draft's identity/model/tool/timestamp placeholders; verify the exported PDF is 1–3 pages and all three submission links are public. Full reproduction and evidence rules are in <code>docs/demo.md</code>, <code>docs/scorecard.md</code> and <code>docs/submission-checklist.md</code>.</p>
-<footer>Draft source · 3 / 3 · Not a final submission; claims require actual recorded evidence.</footer>
+<p class="small"><strong>Before submission:</strong> fill team identity and measured cost, export this file to a 1 to 3 page PDF, and confirm all three public links open without an account. Reproduction and evidence rules are in <code>docs/demo.md</code>, <code>docs/scorecard.md</code> and <code>docs/submission-checklist.md</code>.</p>
+<footer>Source for the submission PDF · 3 / 3 · Claims limited to the published recording at youtu.be/s8OKXVHf0po.</footer>
 </section></html>

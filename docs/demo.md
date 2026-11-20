@@ -4,7 +4,11 @@
 
 The official Forge-a-thon problem statement (Round 1, pp. 4–8) fixes **pallets/flask tag `3.1.3`, commit `22d924701a6ae2e4cd01e9a15bbaf3946094af65`**. Record A, B, C in that order. These scripts prepare and verify a real checkout; **they do not run an agent, generate a solution, inject implementation code, or prove UI behaviour**. Finn must make the edits through its VS Code UI and TrueForge. The only generated Python fixture is a tiny external Flask app holding synthetic configuration values for the Task B output probe.
 
-Current evidence: preparation was exercised on the official checkout; baseline `tests/test_cli.py` passed **58 tests**. Unmodified Flask correctly fails the A/B acceptance probes. Clean before/after filesystem comparison works for C, but that alone is **not** a resilience demonstration. No successful model-backed fixed-task run has been recorded; configure a model before rehearsing. Do not turn unit tests, mock-server tests, or a successful extension activation into a claim of successful A/B/C. The agent runtime itself has since been verified live with a real model through TrueForge (streamed text, real editor MCP tool calls, in-memory proposal, accepted hunk, undo, mid-stream cancellation); see `docs/implementation-agent.md`. That verifies the machinery, not the fixed tasks below.
+Current evidence: preparation was exercised on the official checkout; baseline `tests/test_cli.py` passed **58 tests**. Unmodified Flask correctly fails the A/B acceptance probes. Clean before/after filesystem comparison works for C, but that alone is **not** a resilience demonstration. The recorded run below was made with a real model through TrueForge and is linked in the next section. Do not turn unit tests, mock-server tests, or a successful extension activation into a claim of successful A/B/C. The agent runtime itself has since been verified live with a real model through TrueForge (streamed text, real editor MCP tool calls, in-memory proposal, accepted hunk, undo, mid-stream cancellation); see `docs/implementation-agent.md`. That verifies the machinery, not the fixed tasks below.
+
+### Recorded run, 20 November 2026
+
+The narrated walkthrough is published at <https://youtu.be/s8OKXVHf0po> (3 min 53 s). It shows A, then B, then C against this checkout, each followed by its verifier output. Model waits are speed-changed 18x and 20x with on-screen captions; instruction, diff, acceptance and verification run at normal speed. Hunk rejection, undo and the TrueForge session view are not shown.
 
 ### Rehearsal run, 18 November 2026
 

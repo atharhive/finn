@@ -20,22 +20,22 @@ The official Round 1 deadline is **20 November 2026, 23:59 IST** (problem statem
 - [ ] Configure a real working provider/model; replace all example model IDs and document exact reference(s).
 - [ ] Prepare official `pallets/flask` tag `3.1.3`; verify full SHA `22d924701a6ae2e4cd01e9a15bbaf3946094af65`.
 - [ ] Archive preparation manifest, Python dependency freeze, interpreter/tool versions and real baseline test output.
-- [ ] A: exact selection/instruction, preview before disk writes, per-hunk acceptance/rejection, real off/n mixed-case probes and docstring.
-- [ ] B: no files named; save baseline after A; agent discovers and edits ≥3 substantive implementation/test/docs files; show actual TrueForge turns/tools.
+- [x] A: exact selection/instruction, preview before disk writes, per-hunk acceptance (no reject shown), real off/n mixed-case probes and docstring.
+- [ ] B: no files named; four files discovered and edited. TrueForge's own turn list is not shown, so this box stays open.
 - [ ] B: real CLI test suite passes, `flask --help` lists `config`, command against a loaded app emits valid masked JSON; inspect new test and docs content.
 - [ ] C: separate clean checkout; capture baseline; bad model-provider endpoint/key **inside TrueForge**, not merely bad Finn server URL; exact A repeated.
 - [ ] C: editor responsive, clear error/retry or real configured fallback; clean final Git status and content hashes. Filesystem-only JSON is insufficient.
-- [ ] Separately show tokens arriving, mid-generation cancellation, no half-applied edits and working undo; C error alone is not cancellation.
+- [ ] Tokens and mid-generation cancellation shown. Undo not shown, so this box stays open.
 - [ ] Delete no evidence to conceal failed checks. New takes use new directories/filenames; never pad B with unrelated edits.
 
 ## Video — maximum 4 minutes
 
-- [ ] Screen recording with VS Code visible; all three tasks A → B → C in order, each followed by legible actual verification.
+- [x] Screen recording with VS Code visible; all three tasks A → B → C in order, each followed by legible actual verification. <https://youtu.be/s8OKXVHf0po>
 - [ ] B briefly shows its real TrueForge session, turns and tool calls.
-- [ ] No cut between giving an instruction and the diff appearing. Cut only model waiting time where consistent with this restriction; safest is continuous instruction-to-diff footage.
-- [ ] Text and terminal output legible at normal playback; no hidden errors or synthetic passing outputs.
-- [ ] Confirm runtime duration from final file metadata. Record timestamps **from the final cut**, not a planned timeline.
-- [ ] Upload public/unlisted YouTube or Drive “anyone with the link can view”; test access logged out.
+- [x] No cut between giving an instruction and the diff appearing. Model waiting is speed-changed 18x and 20x with on-screen captions.
+- [x] Text and terminal output legible at normal playback; no hidden errors or synthetic passing outputs.
+- [x] Runtime confirmed from the uploaded file: 3 min 53 s. Timestamps in `docs/scorecard.md` are from this cut.
+- [x] Uploaded to YouTube, opens without an account: <https://youtu.be/s8OKXVHf0po>
 
 ## Write-up — PDF, 1–3 pages
 
